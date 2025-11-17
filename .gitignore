@@ -1,0 +1,30 @@
+# Archivos temporales
+*.tmp
+*.backup
+*.bak
+*~
+*_backup.*
+
+# Logs
+*.log
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Archivos de configuración local
+# config.local.lua
+
+# Node modules
+node_modules/
+package-lock.json
+
+# Archivos de desarrollo
+test/
+*.test.js
