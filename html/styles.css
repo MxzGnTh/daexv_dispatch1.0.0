@@ -1038,3 +1038,450 @@ body {
         font-size: 8px;
     }
 }
+
+/* ===================================================== */
+/* ODE (Officer Development & Evaluation) SYSTEM */
+/* ===================================================== */
+
+/* ODE Access Panel */
+.ode-access-panel {
+    margin: 20px 0;
+    text-align: center;
+    border-top: 2px solid var(--color-border-dark);
+    padding-top: 20px;
+}
+
+.ode-btn {
+    background: linear-gradient(135deg, #8b6914 0%, #b8860b 100%);
+    border: 3px solid #6b5210;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 24px;
+    min-width: 300px;
+}
+
+.ode-btn:hover {
+    background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+    border-color: #8b6914;
+    transform: scale(1.02);
+}
+
+/* ODE Container */
+#ode-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 920px;
+    max-height: calc(100vh - 40px);
+    background: linear-gradient(135deg, #d4c4a8 0%, #c9b896 100%);
+    border: 6px solid var(--color-border-dark);
+    border-radius: 6px;
+    box-shadow: 
+        0 4px 40px rgba(0, 0, 0, 0.8),
+        inset 0 0 120px rgba(107, 68, 35, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    padding: 22px;
+    overflow-y: auto;
+    z-index: 10000;
+}
+
+/* ODE Header */
+.ode-header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px double var(--color-border-dark);
+}
+
+/* ODE Navigation */
+.ode-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(139, 90, 43, 0.1);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+}
+
+.ode-nav-btn {
+    flex: 1;
+    padding: 10px 15px;
+    font-size: 14px;
+    background: linear-gradient(135deg, #c9b896 0%, #b8a486 100%);
+    border: 2px solid var(--color-border-medium);
+}
+
+.ode-nav-btn.active {
+    background: linear-gradient(135deg, #8b6914 0%, #b8860b 100%);
+    color: #fff;
+    border-color: #6b5210;
+    font-weight: 600;
+}
+
+.ode-nav-btn:hover {
+    background: linear-gradient(135deg, #b8a486 0%, #a89476 100%);
+}
+
+.ode-nav-btn.active:hover {
+    background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
+}
+
+/* ODE Panels */
+.ode-panel {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.ode-panel.hidden {
+    display: none;
+}
+
+/* Officers List */
+.officers-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.officer-card {
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.officer-card:hover {
+    background: rgba(184, 134, 11, 0.2);
+    border-color: var(--color-border-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.officer-card-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 5px;
+}
+
+.officer-card-rank {
+    font-size: 14px;
+    color: var(--color-text-medium);
+    text-transform: uppercase;
+}
+
+/* Evaluation Form */
+.evaluation-form {
+    background: rgba(255, 255, 255, 0.4);
+    padding: 20px;
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--color-text-dark);
+}
+
+/* Evaluation Header */
+.evaluation-header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: rgba(139, 101, 20, 0.1);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+}
+
+.eval-officer-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 10px 0;
+}
+
+.eval-date {
+    font-size: 14px;
+    color: var(--color-text-medium);
+}
+
+/* Evaluation Categories */
+.evaluation-categories {
+    margin-bottom: 20px;
+}
+
+.category-section {
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.category-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-border-medium);
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.check-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.check-item-text {
+    flex: 1;
+    font-size: 14px;
+    color: var(--color-text-dark);
+}
+
+.check-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.check-btn {
+    padding: 8px 15px;
+    font-size: 13px;
+    border: 2px solid;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 90px;
+}
+
+.check-btn-positive {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4caf50;
+    color: #2e7d32;
+}
+
+.check-btn-positive:hover {
+    background: rgba(76, 175, 80, 0.3);
+}
+
+.check-btn-positive.active {
+    background: #4caf50;
+    color: white;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.6);
+}
+
+.check-btn-negative {
+    background: rgba(244, 67, 54, 0.2);
+    border-color: #f44336;
+    color: #c62828;
+}
+
+.check-btn-negative:hover {
+    background: rgba(244, 67, 54, 0.3);
+}
+
+.check-btn-negative.active {
+    background: #f44336;
+    color: white;
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.6);
+}
+
+.check-btn-observed {
+    background: rgba(255, 152, 0, 0.2);
+    border-color: #ff9800;
+    color: #e65100;
+}
+
+.check-btn-observed:hover {
+    background: rgba(255, 152, 0, 0.3);
+}
+
+.check-btn-observed.active {
+    background: #ff9800;
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.6);
+}
+
+/* Evaluation Notes */
+.evaluation-notes {
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.evaluation-notes h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: var(--color-text-dark);
+}
+
+.western-textarea {
+    width: 100%;
+    padding: 12px;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 3px;
+    color: var(--color-text-dark);
+    resize: vertical;
+}
+
+.western-textarea:focus {
+    outline: none;
+    border-color: var(--color-border-dark);
+    box-shadow: 0 0 8px rgba(107, 68, 35, 0.3);
+}
+
+/* Evaluation Actions */
+.evaluation-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.success-btn {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    border-color: #388e3c;
+    color: white;
+}
+
+.success-btn:hover {
+    background: linear-gradient(135deg, #66bb6a 0%, #81c784 100%);
+    border-color: #4caf50;
+}
+
+/* Evaluations History */
+.evaluations-history {
+    margin-top: 15px;
+}
+
+.evaluation-history-item {
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.evaluation-history-item:hover {
+    background: rgba(184, 134, 11, 0.2);
+    border-color: var(--color-border-dark);
+    transform: translateX(5px);
+}
+
+.eval-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.eval-history-officer {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.eval-history-date {
+    font-size: 13px;
+    color: var(--color-text-medium);
+}
+
+.eval-history-info {
+    font-size: 13px;
+    color: var(--color-text-medium);
+}
+
+.eval-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+
+.eval-status.in-progress {
+    background: rgba(255, 152, 0, 0.3);
+    color: #e65100;
+}
+
+.eval-status.completed {
+    background: rgba(76, 175, 80, 0.3);
+    color: #2e7d32;
+}
+
+/* Responsive ODE */
+@media (max-width: 1024px) {
+    #ode-container {
+        width: calc(100vw - 40px);
+        max-width: 700px;
+    }
+    
+    .officers-container {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    #ode-container {
+        width: calc(100vw - 20px);
+        right: 10px;
+        top: 10px;
+    }
+    
+    .ode-nav {
+        flex-direction: column;
+    }
+    
+    .officers-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .check-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .check-btn {
+        min-width: 100%;
+    }
+    
+    .evaluation-actions {
+        flex-direction: column;
+    }
+}

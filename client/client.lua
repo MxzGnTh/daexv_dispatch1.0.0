@@ -52,7 +52,8 @@ local function ToggleDispatch()
             isAdmin = isAdmin,
             districts = Config.Districts,
             statuses = Config.Status,
-            towns = Config.Towns
+            towns = Config.Towns,
+            odeConfig = Config.ODE
         })
         print("^2[DAEXV DISPATCH]^7 Panel abierto, NuiFocus activado")
     else
@@ -225,6 +226,145 @@ RegisterNUICallback('removeUnit', function(data, cb)
 end)
 
 -- =====================================================
+-- ODE CALLBACKS NUI
+-- =====================================================
+
+-- Crear nueva evaluación
+RegisterNUICallback('ode_createEvaluation', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_createEvaluation")
+    if data.officerId and data.officerName then
+        TriggerServerEvent('ode:createEvaluation', data.officerId, data.officerName)
+    end
+    cb('ok')
+end)
+
+-- Obtener evaluaciones de un oficial
+RegisterNUICallback('ode_getEvaluations', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_getEvaluations")
+    if data.officerId then
+        TriggerServerEvent('ode:getEvaluations', data.officerId)
+    end
+    cb('ok')
+end)
+
+-- Obtener detalles de una evaluación
+RegisterNUICallback('ode_getEvaluationDetails', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_getEvaluationDetails")
+    if data.evaluationId then
+        TriggerServerEvent('ode:getEvaluationDetails', data.evaluationId)
+    end
+    cb('ok')
+end)
+
+-- Guardar check individual
+RegisterNUICallback('ode_saveCheck', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_saveCheck")
+    if data.evaluationId and data.category and data.checkItem and data.checkValue then
+        TriggerServerEvent('ode:saveCheck', data.evaluationId, data.category, data.checkItem, data.checkValue, data.notes or '')
+    end
+    cb('ok')
+end)
+
+-- Actualizar notas generales
+RegisterNUICallback('ode_updateNotes', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_updateNotes")
+    if data.evaluationId and data.notes then
+        TriggerServerEvent('ode:updateNotes', data.evaluationId, data.notes)
+    end
+    cb('ok')
+end)
+
+-- Completar evaluación
+RegisterNUICallback('ode_completeEvaluation', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_completeEvaluation")
+    if data.evaluationId then
+        TriggerServerEvent('ode:completeEvaluation', data.evaluationId)
+    end
+    cb('ok')
+end)
+
+-- Obtener lista de oficiales
+RegisterNUICallback('ode_getOfficersList', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_getOfficersList")
+    TriggerServerEvent('ode:getOfficersList')
+    cb('ok')
+end)
+
+-- =====================================================
+-- ODE EVENTOS DEL CLIENTE
+-- =====================================================
+
+-- Evaluación creada
+RegisterNetEvent('ode:evaluationCreated')
+AddEventHandler('ode:evaluationCreated', function(evaluationId)
+    print("^2[ODE]^7 Evaluación creada con ID: " .. evaluationId)
+    SendNUIMessage({
+        action = 'ode_evaluationCreated',
+        evaluationId = evaluationId
+    })
+end)
+
+-- Recibir evaluaciones
+RegisterNetEvent('ode:receiveEvaluations')
+AddEventHandler('ode:receiveEvaluations', function(evaluations)
+    print("^2[ODE]^7 Evaluaciones recibidas: " .. #evaluations)
+    SendNUIMessage({
+        action = 'ode_receiveEvaluations',
+        evaluations = evaluations
+    })
+end)
+
+-- Recibir detalles de evaluación
+RegisterNetEvent('ode:receiveEvaluationDetails')
+AddEventHandler('ode:receiveEvaluationDetails', function(evaluation)
+    print("^2[ODE]^7 Detalles de evaluación recibidos")
+    SendNUIMessage({
+        action = 'ode_receiveEvaluationDetails',
+        evaluation = evaluation
+    })
+end)
+
+-- Check guardado
+RegisterNetEvent('ode:checkSaved')
+AddEventHandler('ode:checkSaved', function(success)
+    print("^2[ODE]^7 Check guardado: " .. tostring(success))
+    SendNUIMessage({
+        action = 'ode_checkSaved',
+        success = success
+    })
+end)
+
+-- Notas actualizadas
+RegisterNetEvent('ode:notesUpdated')
+AddEventHandler('ode:notesUpdated', function(success)
+    print("^2[ODE]^7 Notas actualizadas: " .. tostring(success))
+    SendNUIMessage({
+        action = 'ode_notesUpdated',
+        success = success
+    })
+end)
+
+-- Evaluación completada
+RegisterNetEvent('ode:evaluationCompleted')
+AddEventHandler('ode:evaluationCompleted', function(success)
+    print("^2[ODE]^7 Evaluación completada: " .. tostring(success))
+    SendNUIMessage({
+        action = 'ode_evaluationCompleted',
+        success = success
+    })
+end)
+
+-- Recibir lista de oficiales
+RegisterNetEvent('ode:receiveOfficersList')
+AddEventHandler('ode:receiveOfficersList', function(officers)
+    print("^2[ODE]^7 Lista de oficiales recibida: " .. #officers)
+    SendNUIMessage({
+        action = 'ode_receiveOfficersList',
+        officers = officers
+    })
+end)
+
+-- =====================================================
 -- LIMPIAR AL SALIR DEL JUEGO
 -- =====================================================
 
@@ -246,4 +386,5 @@ end)
 print("^2[DAEXV DISPATCH]^7 ========================================")
 print("^2[DAEXV DISPATCH]^7 Cliente cargado completamente")
 print("^2[DAEXV DISPATCH]^7 Presiona F6 o escribe /dispatch")
+print("^2[ODE]^7 Sistema ODE cliente cargado")
 print("^2[DAEXV DISPATCH]^7 ========================================")

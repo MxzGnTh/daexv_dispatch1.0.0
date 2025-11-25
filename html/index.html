@@ -72,8 +72,87 @@
             </div>
         </div>
 
+        <!-- Botón ODE -->
+        <div class="ode-access-panel">
+            <button id="btn-ode" class="western-btn ode-btn">📋 Sistema ODE - Evaluaciones</button>
+        </div>
+
         <!-- Botón de cerrar -->
         <button id="btn-close" class="western-btn close-btn">✖ Cerrar Dispatch</button>
+    </div>
+
+    <!-- Panel ODE (Officer Development & Evaluation) -->
+    <div id="ode-container" class="hidden">
+        <div class="ode-header">
+            <div class="header-ornament left"></div>
+            <h1 class="dispatch-title">DESARROLLO Y EVALUACIÓN DE OFICIALES</h1>
+            <div class="header-ornament right"></div>
+            <p class="dispatch-subtitle">Sistema ODE - Año 1899</p>
+        </div>
+
+        <!-- Navegación ODE -->
+        <div class="ode-nav">
+            <button id="ode-nav-list" class="western-btn ode-nav-btn active">Lista de Oficiales</button>
+            <button id="ode-nav-evaluations" class="western-btn ode-nav-btn">Mis Evaluaciones</button>
+            <button id="ode-nav-create" class="western-btn ode-nav-btn">Nueva Evaluación</button>
+        </div>
+
+        <!-- Panel: Lista de Oficiales -->
+        <div id="ode-panel-list" class="ode-panel">
+            <h2 class="section-title">Oficiales Disponibles para Evaluación</h2>
+            <div id="officers-list-container" class="officers-container">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Panel: Crear Evaluación -->
+        <div id="ode-panel-create" class="ode-panel hidden">
+            <h2 class="section-title">Nueva Evaluación de Oficial</h2>
+            <div class="evaluation-form">
+                <div class="form-group">
+                    <label for="eval-officer-select">Seleccionar Oficial:</label>
+                    <select id="eval-officer-select" class="western-select">
+                        <option value="">-- Seleccionar Oficial --</option>
+                    </select>
+                </div>
+                <button id="btn-start-evaluation" class="western-btn">Iniciar Evaluación</button>
+            </div>
+        </div>
+
+        <!-- Panel: Evaluación Activa -->
+        <div id="ode-panel-evaluation" class="ode-panel hidden">
+            <div class="evaluation-header">
+                <h2 class="section-title">Evaluación en Progreso</h2>
+                <p id="eval-officer-name" class="eval-officer-name"></p>
+                <p id="eval-date" class="eval-date"></p>
+            </div>
+
+            <div id="evaluation-categories-container" class="evaluation-categories">
+                <!-- Las categorías se generarán dinámicamente -->
+            </div>
+
+            <div class="evaluation-notes">
+                <h3>Notas Generales</h3>
+                <textarea id="eval-notes" class="western-textarea" rows="5" placeholder="Escriba observaciones generales sobre el desempeño del oficial..."></textarea>
+                <button id="btn-save-notes" class="western-btn">Guardar Notas</button>
+            </div>
+
+            <div class="evaluation-actions">
+                <button id="btn-complete-evaluation" class="western-btn success-btn">✓ Completar Evaluación</button>
+                <button id="btn-cancel-evaluation" class="western-btn">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Panel: Mis Evaluaciones -->
+        <div id="ode-panel-evaluations" class="ode-panel hidden">
+            <h2 class="section-title">Historial de Evaluaciones</h2>
+            <div id="evaluations-history-container" class="evaluations-history">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Botón volver al dispatch -->
+        <button id="btn-ode-back" class="western-btn close-btn">← Volver al Dispatch</button>
     </div>
 
     <!-- Modal de alertas personalizado -->

@@ -327,4 +327,176 @@ AddEventHandler('playerDropped', function(reason)
     end)
 end)
 
+-- =====================================================
+-- SISTEMA ODE (Officer Development & Evaluation)
+-- =====================================================
+
+-- Crear nueva evaluación
+RegisterNetEvent('ode:createEvaluation')
+AddEventHandler('ode:createEvaluation', function(evaluatedOfficerId, evaluatedOfficerName)
+    local _source = source
+    
+    if not IsAdminRank(_source) then
+        print("^1[ODE]^7 Usuario sin permisos de admin intentó crear evaluación")
+        return
+    end
+    
+    local charData = GetCharacterData(_source)
+    if not charData then return end
+    
+    local evaluatorName = charData.firstname .. " " .. charData.lastname
+    
+    exports.oxmysql:execute('INSERT INTO ode_evaluations (evaluated_officer_id, evaluated_officer_name, evaluator_id, evaluator_name, status) VALUES (?, ?, ?, ?, ?)', {
+        evaluatedOfficerId, evaluatedOfficerName, charData.charidentifier, evaluatorName, 'in_progress'
+    }, function(insertId)
+        print("^2[ODE]^7 Nueva evaluación creada - ID: " .. insertId)
+        TriggerClientEvent('ode:evaluationCreated', _source, insertId)
+    end)
+end)
+
+-- Obtener evaluaciones de un oficial
+RegisterNetEvent('ode:getEvaluations')
+AddEventHandler('ode:getEvaluations', function(officerId)
+    local _source = source
+    
+    if not HasAllowedJob(_source) then
+        return
+    end
+    
+    exports.oxmysql:execute('SELECT * FROM ode_evaluations WHERE evaluated_officer_id = ? ORDER BY evaluation_date DESC', {officerId}, function(evaluations)
+        TriggerClientEvent('ode:receiveEvaluations', _source, evaluations)
+    end)
+end)
+
+-- Obtener detalles de una evaluación específica
+RegisterNetEvent('ode:getEvaluationDetails')
+AddEventHandler('ode:getEvaluationDetails', function(evaluationId)
+    local _source = source
+    
+    if not HasAllowedJob(_source) then
+        return
+    end
+    
+    exports.oxmysql:execute('SELECT * FROM ode_evaluations WHERE id = ?', {evaluationId}, function(evaluations)
+        if evaluations and #evaluations > 0 then
+            local evaluation = evaluations[1]
+            
+            -- Obtener checks de esta evaluación
+            exports.oxmysql:execute('SELECT * FROM ode_evaluation_checks WHERE evaluation_id = ? ORDER BY category, id', {evaluationId}, function(checks)
+                evaluation.checks = checks or {}
+                TriggerClientEvent('ode:receiveEvaluationDetails', _source, evaluation)
+            end)
+        else
+            TriggerClientEvent('ode:receiveEvaluationDetails', _source, nil)
+        end
+    end)
+end)
+
+-- Guardar/actualizar un check individual
+RegisterNetEvent('ode:saveCheck')
+AddEventHandler('ode:saveCheck', function(evaluationId, category, checkItem, checkValue, notes)
+    local _source = source
+    
+    if not IsAdminRank(_source) then
+        return
+    end
+    
+    local charData = GetCharacterData(_source)
+    if not charData then return end
+    
+    -- Verificar si el check ya existe
+    exports.oxmysql:execute('SELECT id FROM ode_evaluation_checks WHERE evaluation_id = ? AND category = ? AND check_item = ?', {
+        evaluationId, category, checkItem
+    }, function(existing)
+        if existing and #existing > 0 then
+            -- Actualizar check existente
+            local checkId = existing[1].id
+            exports.oxmysql:execute('UPDATE ode_evaluation_checks SET check_value = ?, notes = ?, checked_at = CURRENT_TIMESTAMP WHERE id = ?', {
+                checkValue, notes, checkId
+            }, function(affectedRows)
+                print("^2[ODE]^7 Check actualizado - ID: " .. checkId)
+                
+                -- Log de cambio
+                exports.oxmysql:execute('INSERT INTO ode_logs (evaluation_id, check_id, action, new_value, changed_by) VALUES (?, ?, ?, ?, ?)', {
+                    evaluationId, checkId, 'check_updated', checkValue, charData.charidentifier
+                })
+                
+                TriggerClientEvent('ode:checkSaved', _source, true)
+            end)
+        else
+            -- Insertar nuevo check
+            exports.oxmysql:execute('INSERT INTO ode_evaluation_checks (evaluation_id, category, check_item, check_value, notes) VALUES (?, ?, ?, ?, ?)', {
+                evaluationId, category, checkItem, checkValue, notes
+            }, function(insertId)
+                print("^2[ODE]^7 Nuevo check guardado - ID: " .. insertId)
+                
+                -- Log de creación
+                exports.oxmysql:execute('INSERT INTO ode_logs (evaluation_id, check_id, action, new_value, changed_by) VALUES (?, ?, ?, ?, ?)', {
+                    evaluationId, insertId, 'check_created', checkValue, charData.charidentifier
+                })
+                
+                TriggerClientEvent('ode:checkSaved', _source, true)
+            end)
+        end
+    end)
+end)
+
+-- Actualizar notas generales de la evaluación
+RegisterNetEvent('ode:updateNotes')
+AddEventHandler('ode:updateNotes', function(evaluationId, notes)
+    local _source = source
+    
+    if not IsAdminRank(_source) then
+        return
+    end
+    
+    exports.oxmysql:execute('UPDATE ode_evaluations SET overall_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', {
+        notes, evaluationId
+    }, function(affectedRows)
+        print("^2[ODE]^7 Notas de evaluación actualizadas")
+        TriggerClientEvent('ode:notesUpdated', _source, true)
+    end)
+end)
+
+-- Completar evaluación
+RegisterNetEvent('ode:completeEvaluation')
+AddEventHandler('ode:completeEvaluation', function(evaluationId)
+    local _source = source
+    
+    if not IsAdminRank(_source) then
+        return
+    end
+    
+    local charData = GetCharacterData(_source)
+    if not charData then return end
+    
+    exports.oxmysql:execute('UPDATE ode_evaluations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', {
+        'completed', evaluationId
+    }, function(affectedRows)
+        print("^2[ODE]^7 Evaluación completada - ID: " .. evaluationId)
+        
+        -- Log de completado
+        exports.oxmysql:execute('INSERT INTO ode_logs (evaluation_id, action, new_value, changed_by) VALUES (?, ?, ?, ?)', {
+            evaluationId, 'evaluation_completed', 'completed', charData.charidentifier
+        })
+        
+        TriggerClientEvent('ode:evaluationCompleted', _source, true)
+    end)
+end)
+
+-- Obtener todos los oficiales para evaluación
+RegisterNetEvent('ode:getOfficersList')
+AddEventHandler('ode:getOfficersList', function()
+    local _source = source
+    
+    if not HasAllowedJob(_source) then
+        return
+    end
+    
+    exports.oxmysql:execute('SELECT DISTINCT charidentifier, firstname, lastname, jobname FROM dispatch_units ORDER BY lastname, firstname', {}, function(officers)
+        TriggerClientEvent('ode:receiveOfficersList', _source, officers or {})
+    end)
+end)
+
 print("^2[DAEXV DISPATCH]^7 Servidor cargado completamente")
+print("^2[ODE]^7 Sistema ODE cargado correctamente")
