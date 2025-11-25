@@ -10,8 +10,11 @@ Sin GPS, Sin Radios, Sin Mapas, Sin Iconos. Todo es manual y administrativo.
 
 Sistema completo de Dispatch para el Departamento del Sheriff ambientado en 1899. Permite a los oficiales registrarse manualmente en distritos, actualizar su estado y gestionar unidades de forma administrativa, tal como se hacía en la época del Viejo Oeste.
 
+**NUEVO:** Incluye Sistema ODE (Officer Development & Evaluation) para evaluar el desempeño de oficiales.
+
 ### ✨ Características Principales
 
+#### Sistema de Dispatch
 - ✅ Panel de Dispatch con tecla **F6**
 - ✅ Registro manual de oficiales por distrito
 - ✅ **Sistema de Mandos** - Oficiales pueden supervisar pueblos específicos
@@ -23,6 +26,15 @@ Sistema completo de Dispatch para el Departamento del Sheriff ambientado en 1899
 - ✅ Base de datos MySQL con historial de cambios
 - ✅ Sin elementos modernos ni tecnología fuera de época
 - ✅ 100% Manual - Nada automático
+
+#### Sistema ODE (Officer Development & Evaluation)
+- ✅ **Evaluaciones de Oficiales** - Sistema completo para evaluar desempeño
+- ✅ **Checks por Botones** - Positivo/Negativo/Observado con guardado automático
+- ✅ **6 Categorías de Evaluación** - Conducta, Procedimientos, Comunicación, Patrullaje, Equipo, Liderazgo
+- ✅ **Registro Individual** - Cada evaluación se guarda por separado en base de datos
+- ✅ **Historial Completo** - Todas las evaluaciones son permanentes y auditables
+- ✅ **Notas Generales** - Espacio para observaciones detalladas
+- ✅ **Solo para Admins** - Acceso restringido a rangos superiores
 
 ---
 
@@ -41,7 +53,8 @@ dispatch/
 │     ├── styles.css
 │     └── script.js
 └── sql/
-      └── dispatch.sql
+      ├── dispatch.sql
+      └── ode_system.sql
 ```
 
 ---
@@ -65,9 +78,15 @@ dispatch/
 2. **Importar la base de datos**:
    - Abre tu gestor de MySQL (phpMyAdmin, HeidiSQL, etc.)
    - Importa el archivo `sql/dispatch.sql`
+   - **NUEVO:** Importa también `sql/ode_system.sql` para el sistema de evaluaciones
    - Esto creará las tablas:
-     - `dispatch_units` (Registro de unidades)
-     - `dispatch_logs` (Historial de cambios)
+     - **Dispatch:**
+       - `dispatch_units` (Registro de unidades)
+       - `dispatch_logs` (Historial de cambios)
+     - **Sistema ODE:**
+       - `ode_evaluations` (Evaluaciones de oficiales)
+       - `ode_evaluation_checks` (Checks individuales)
+       - `ode_logs` (Auditoría de evaluaciones)
 
 3. **Configurar el recurso**:
    - Abre `config.lua`
@@ -78,6 +97,10 @@ dispatch/
          'deputy',
          'marshal'
      }
+     ```
+   - **Para Testing:** Activa acceso universal (solo para pruebas):
+     ```lua
+     Config.AllowAllPlayers = true  -- Cambiar a false en producción
      ```
    - Puedes modificar distritos y estados según tu servidor
 
@@ -343,6 +366,58 @@ La interfaz está diseñada con:
 
 ---
 
+## 📋 SISTEMA ODE (Officer Development & Evaluation)
+
+### Acceso al Sistema ODE
+
+El sistema ODE está integrado en el Dispatch y solo es accesible para rangos administrativos.
+
+1. **Abrir el Dispatch** con F6
+2. Si tienes permisos de admin, verás el botón **"📋 Sistema ODE - Evaluaciones"**
+3. Haz clic para acceder al panel de evaluaciones
+
+### Características del Sistema ODE
+
+- **Evaluaciones Estructuradas**: 6 categorías con 5 criterios cada una
+- **Checks por Botones**: Marca cada criterio como Positivo ✓, Negativo ✗, u Observado ◉
+- **Guardado Automático**: Cada clic se guarda instantáneamente en la base de datos
+- **Registro Individual**: Cada evaluación se almacena por separado
+- **Notas Generales**: Espacio para observaciones detalladas
+- **Historial Permanente**: Todas las evaluaciones quedan registradas
+- **Auditoría Completa**: Sistema de logs para seguimiento de cambios
+
+### Categorías de Evaluación
+
+1. **Conducta Profesional** (5 criterios)
+2. **Procedimientos Policiales** (5 criterios)
+3. **Comunicación** (5 criterios)
+4. **Patrullaje** (5 criterios)
+5. **Trabajo en Equipo** (5 criterios)
+6. **Iniciativa y Liderazgo** (5 criterios)
+
+### Guía Rápida de Uso
+
+1. **Crear Evaluación**: 
+   - Selecciona un oficial de la lista
+   - O usa el formulario "Nueva Evaluación"
+   
+2. **Evaluar**:
+   - Revisa cada categoría
+   - Haz clic en Positivo/Negativo/Observado para cada criterio
+   - Los cambios se guardan automáticamente
+   
+3. **Agregar Notas**:
+   - Escribe observaciones en "Notas Generales"
+   - Haz clic en "Guardar Notas"
+   
+4. **Completar**:
+   - Cuando termines, haz clic en "✓ Completar Evaluación"
+   - La evaluación quedará registrada permanentemente
+
+📖 **Documentación Completa del Sistema ODE:** [ODE_SYSTEM.md](ODE_SYSTEM.md)
+
+---
+
 ## 🤝 SOPORTE Y CONTRIBUCIONES
 
 Si encuentras errores o tienes sugerencias:
@@ -350,6 +425,7 @@ Si encuentras errores o tienes sugerencias:
 1. Revisa los logs del servidor
 2. Verifica la configuración
 3. Consulta este README
+4. Consulta [ODE_SYSTEM.md](ODE_SYSTEM.md) para el sistema de evaluaciones
 
 ---
 

@@ -193,6 +193,11 @@ function openDispatch(data) {
     statuses = data.statuses || [];
     towns = data.towns || {};
     
+    // Initialize ODE system
+    if (data.odeConfig) {
+        initODE(data.odeConfig);
+    }
+    
     // Mostrar indicador de admin
     const adminIndicator = document.getElementById('admin-indicator');
     if (isAdmin) {
@@ -209,6 +214,16 @@ function openDispatch(data) {
         }, 10000);
     } else {
         adminIndicator.classList.add('hidden');
+    }
+    
+    // Show/hide ODE access button based on admin status
+    const odeAccessPanel = document.querySelector('.ode-access-panel');
+    if (odeAccessPanel) {
+        if (isAdmin) {
+            odeAccessPanel.style.display = 'block';
+        } else {
+            odeAccessPanel.style.display = 'none';
+        }
     }
     
     // Poblar selectores
@@ -665,3 +680,389 @@ function normalizeStatus(status) {
     
     return 'fuera';
 }
+
+// =====================================================
+// ODE SYSTEM (Officer Development & Evaluation)
+// =====================================================
+
+let odeConfig = null;
+let currentEvaluationId = null;
+let currentEvaluatedOfficer = null;
+let officersList = [];
+let evaluationChecks = {};
+
+// Initialize ODE when dispatch opens
+function initODE(config) {
+    odeConfig = config;
+    console.log('[ODE] Sistema ODE inicializado', config);
+}
+
+// Show/Hide ODE System
+function showODE() {
+    document.getElementById('dispatch-container').classList.add('hidden');
+    document.getElementById('ode-container').classList.remove('hidden');
+    
+    // Request officers list
+    fetch('https://daexv_dispatch/ode_getOfficersList', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    }).catch(() => {});
+    
+    // Show officers list panel by default
+    showODEPanel('list');
+}
+
+function hideODE() {
+    document.getElementById('ode-container').classList.add('hidden');
+    document.getElementById('dispatch-container').classList.remove('hidden');
+}
+
+// Navigation between ODE panels
+function showODEPanel(panelName) {
+    // Hide all panels
+    document.querySelectorAll('.ode-panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+    
+    // Remove active class from all nav buttons
+    document.querySelectorAll('.ode-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected panel
+    if (panelName === 'list') {
+        document.getElementById('ode-panel-list').classList.remove('hidden');
+        document.getElementById('ode-nav-list').classList.add('active');
+    } else if (panelName === 'create') {
+        document.getElementById('ode-panel-create').classList.remove('hidden');
+        document.getElementById('ode-nav-create').classList.add('active');
+        populateOfficerSelect();
+    } else if (panelName === 'evaluations') {
+        document.getElementById('ode-panel-evaluations').classList.remove('hidden');
+        document.getElementById('ode-nav-evaluations').classList.add('active');
+    } else if (panelName === 'evaluation') {
+        document.getElementById('ode-panel-evaluation').classList.remove('hidden');
+    }
+}
+
+// Display officers list
+function displayOfficersList(officers) {
+    officersList = officers;
+    const container = document.getElementById('officers-list-container');
+    container.innerHTML = '';
+    
+    if (officers.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 20px;">No hay oficiales registrados en el sistema.</p>';
+        return;
+    }
+    
+    officers.forEach(officer => {
+        const card = document.createElement('div');
+        card.className = 'officer-card';
+        card.onclick = () => selectOfficerForEvaluation(officer);
+        
+        card.innerHTML = `
+            <div class="officer-card-name">${officer.firstname} ${officer.lastname}</div>
+            <div class="officer-card-rank">${officer.jobname}</div>
+        `;
+        
+        container.appendChild(card);
+    });
+}
+
+// Populate officer select dropdown
+function populateOfficerSelect() {
+    const select = document.getElementById('eval-officer-select');
+    select.innerHTML = '<option value="">-- Seleccionar Oficial --</option>';
+    
+    officersList.forEach(officer => {
+        const option = document.createElement('option');
+        option.value = officer.charidentifier;
+        option.textContent = `${officer.firstname} ${officer.lastname} (${officer.jobname})`;
+        option.dataset.name = `${officer.firstname} ${officer.lastname}`;
+        select.appendChild(option);
+    });
+}
+
+// Select officer for evaluation
+function selectOfficerForEvaluation(officer) {
+    currentEvaluatedOfficer = officer;
+    
+    // Create new evaluation
+    fetch('https://daexv_dispatch/ode_createEvaluation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            officerId: officer.charidentifier,
+            officerName: `${officer.firstname} ${officer.lastname}`
+        })
+    }).catch(() => {});
+}
+
+// Start evaluation from form
+function startEvaluation() {
+    const select = document.getElementById('eval-officer-select');
+    const officerId = select.value;
+    const officerName = select.options[select.selectedIndex]?.dataset.name;
+    
+    if (!officerId || !officerName) {
+        showAlert('Por favor seleccione un oficial para evaluar.');
+        return;
+    }
+    
+    // Find officer in list
+    const officer = officersList.find(o => o.charidentifier == officerId);
+    if (officer) {
+        selectOfficerForEvaluation(officer);
+    }
+}
+
+// Build evaluation form
+function buildEvaluationForm(evaluationId) {
+    currentEvaluationId = evaluationId;
+    evaluationChecks = {};
+    
+    const container = document.getElementById('evaluation-categories-container');
+    container.innerHTML = '';
+    
+    if (!odeConfig || !odeConfig.Categories) {
+        console.error('[ODE] No hay configuración de categorías');
+        return;
+    }
+    
+    // Set header info
+    document.getElementById('eval-officer-name').textContent = 
+        currentEvaluatedOfficer ? `${currentEvaluatedOfficer.firstname} ${currentEvaluatedOfficer.lastname}` : 'Oficial';
+    document.getElementById('eval-date').textContent = 
+        `Fecha de Evaluación: ${new Date().toLocaleString('es-ES')}`;
+    
+    // Build categories
+    odeConfig.Categories.forEach(category => {
+        const section = document.createElement('div');
+        section.className = 'category-section';
+        
+        const title = document.createElement('div');
+        title.className = 'category-title';
+        title.textContent = category.name;
+        section.appendChild(title);
+        
+        category.items.forEach(item => {
+            const checkItem = createCheckItem(category.name, item);
+            section.appendChild(checkItem);
+        });
+        
+        container.appendChild(section);
+    });
+    
+    // Show evaluation panel
+    showODEPanel('evaluation');
+}
+
+// Create check item with buttons
+function createCheckItem(category, itemText) {
+    const div = document.createElement('div');
+    div.className = 'check-item';
+    
+    const text = document.createElement('div');
+    text.className = 'check-item-text';
+    text.textContent = itemText;
+    
+    const buttons = document.createElement('div');
+    buttons.className = 'check-buttons';
+    
+    // Positive button
+    const positiveBtn = document.createElement('button');
+    positiveBtn.className = 'check-btn check-btn-positive';
+    positiveBtn.textContent = '✓ Positivo';
+    positiveBtn.onclick = () => saveCheck(category, itemText, 'positive', positiveBtn);
+    
+    // Negative button
+    const negativeBtn = document.createElement('button');
+    negativeBtn.className = 'check-btn check-btn-negative';
+    negativeBtn.textContent = '✗ Negativo';
+    negativeBtn.onclick = () => saveCheck(category, itemText, 'negative', negativeBtn);
+    
+    // Observed button
+    const observedBtn = document.createElement('button');
+    observedBtn.className = 'check-btn check-btn-observed';
+    observedBtn.textContent = '◉ Observado';
+    observedBtn.onclick = () => saveCheck(category, itemText, 'observed', observedBtn);
+    
+    buttons.appendChild(positiveBtn);
+    buttons.appendChild(negativeBtn);
+    buttons.appendChild(observedBtn);
+    
+    div.appendChild(text);
+    div.appendChild(buttons);
+    
+    return div;
+}
+
+// Save individual check
+function saveCheck(category, itemText, value, button) {
+    if (!currentEvaluationId) {
+        console.error('[ODE] No hay evaluación activa');
+        return;
+    }
+    
+    // Store check locally
+    const checkKey = `${category}:${itemText}`;
+    evaluationChecks[checkKey] = value;
+    
+    // Update button states
+    const checkItem = button.closest('.check-item');
+    checkItem.querySelectorAll('.check-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    button.classList.add('active');
+    
+    // Save to server
+    fetch('https://daexv_dispatch/ode_saveCheck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            evaluationId: currentEvaluationId,
+            category: category,
+            checkItem: itemText,
+            checkValue: value,
+            notes: ''
+        })
+    }).catch(() => {});
+    
+    console.log(`[ODE] Check guardado: ${category} - ${itemText} = ${value}`);
+}
+
+// Save evaluation notes
+function saveEvaluationNotes() {
+    if (!currentEvaluationId) {
+        console.error('[ODE] No hay evaluación activa');
+        return;
+    }
+    
+    const notes = document.getElementById('eval-notes').value;
+    
+    fetch('https://daexv_dispatch/ode_updateNotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            evaluationId: currentEvaluationId,
+            notes: notes
+        })
+    }).catch(() => {});
+    
+    showAlert('Notas guardadas correctamente.');
+}
+
+// Complete evaluation
+function completeEvaluation() {
+    if (!currentEvaluationId) {
+        console.error('[ODE] No hay evaluación activa');
+        return;
+    }
+    
+    fetch('https://daexv_dispatch/ode_completeEvaluation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            evaluationId: currentEvaluationId
+        })
+    }).catch(() => {});
+    
+    showAlert('Evaluación completada exitosamente.');
+    
+    // Reset state
+    currentEvaluationId = null;
+    currentEvaluatedOfficer = null;
+    evaluationChecks = {};
+    
+    // Go back to list
+    setTimeout(() => {
+        showODEPanel('list');
+    }, 1500);
+}
+
+// Cancel evaluation
+function cancelEvaluation() {
+    if (confirm('¿Está seguro que desea cancelar esta evaluación? Los cambios guardados se mantendrán.')) {
+        currentEvaluationId = null;
+        currentEvaluatedOfficer = null;
+        evaluationChecks = {};
+        showODEPanel('list');
+    }
+}
+
+// Event listeners for ODE
+document.addEventListener('DOMContentLoaded', () => {
+    // ODE Access Button
+    const odeBtn = document.getElementById('btn-ode');
+    if (odeBtn) {
+        odeBtn.addEventListener('click', showODE);
+    }
+    
+    // Back to dispatch button
+    const odeBackBtn = document.getElementById('btn-ode-back');
+    if (odeBackBtn) {
+        odeBackBtn.addEventListener('click', hideODE);
+    }
+    
+    // ODE Navigation
+    const navList = document.getElementById('ode-nav-list');
+    if (navList) {
+        navList.addEventListener('click', () => showODEPanel('list'));
+    }
+    
+    const navCreate = document.getElementById('ode-nav-create');
+    if (navCreate) {
+        navCreate.addEventListener('click', () => showODEPanel('create'));
+    }
+    
+    const navEvaluations = document.getElementById('ode-nav-evaluations');
+    if (navEvaluations) {
+        navEvaluations.addEventListener('click', () => showODEPanel('evaluations'));
+    }
+    
+    // Start evaluation button
+    const startEvalBtn = document.getElementById('btn-start-evaluation');
+    if (startEvalBtn) {
+        startEvalBtn.addEventListener('click', startEvaluation);
+    }
+    
+    // Save notes button
+    const saveNotesBtn = document.getElementById('btn-save-notes');
+    if (saveNotesBtn) {
+        saveNotesBtn.addEventListener('click', saveEvaluationNotes);
+    }
+    
+    // Complete evaluation button
+    const completeBtn = document.getElementById('btn-complete-evaluation');
+    if (completeBtn) {
+        completeBtn.addEventListener('click', completeEvaluation);
+    }
+    
+    // Cancel evaluation button
+    const cancelBtn = document.getElementById('btn-cancel-evaluation');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', cancelEvaluation);
+    }
+});
+
+// Handle ODE messages from client
+window.addEventListener('message', (event) => {
+    const data = event.data;
+    
+    if (data.action === 'ode_evaluationCreated') {
+        console.log('[ODE] Evaluación creada con ID:', data.evaluationId);
+        buildEvaluationForm(data.evaluationId);
+    } else if (data.action === 'ode_receiveOfficersList') {
+        console.log('[ODE] Lista de oficiales recibida:', data.officers);
+        displayOfficersList(data.officers);
+    } else if (data.action === 'ode_checkSaved') {
+        console.log('[ODE] Check guardado:', data.success);
+        // Visual feedback is already handled in saveCheck function
+    } else if (data.action === 'ode_notesUpdated') {
+        console.log('[ODE] Notas actualizadas:', data.success);
+    } else if (data.action === 'ode_evaluationCompleted') {
+        console.log('[ODE] Evaluación completada:', data.success);
+    }
+});
