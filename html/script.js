@@ -979,12 +979,12 @@ function saveCheck(category, itemText, value, button) {
     
     // Get score for this value
     const scoreValues = { positive: 10, observed: 5, negative: 0 };
-    const newScore = scoreValues[value] || 0;
+    const newScore = scoreValues[value] !== undefined ? scoreValues[value] : 0;
     
     // Store check locally
     const checkKey = `${category}:${itemText}`;
     const oldValue = evaluationChecks[checkKey];
-    const oldScore = oldValue ? scoreValues[oldValue] || 0 : 0;
+    const oldScore = oldValue && scoreValues[oldValue] !== undefined ? scoreValues[oldValue] : 0;
     evaluationChecks[checkKey] = value;
     
     // Update total score
