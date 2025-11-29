@@ -92,7 +92,7 @@ local function IsAdminRank(source)
     local job = Character.job
     
     for _, adminRank in ipairs(Config.AdminRanks) do
-        if job == adminRank then
+        if job == adminRank and Character.jobGrade >= Config.Grades[job] then
             print("^2[DAEXV DISPATCH]^7 Rango ADMIN: " .. job)
             return true
         end
@@ -226,7 +226,7 @@ AddEventHandler('dispatch:updateOwnStatus', function(status)
     exports.oxmysql:execute('UPDATE dispatch_units SET status = ? WHERE charidentifier = ?', {
         status, charData.charidentifier
     }, function(affectedRows)
-        if affectedRows > 0 then
+        if affectedRows and #affectedRows > 0 then
             print("^2[DAEXV DISPATCH]^7 Estado actualizado: " .. status)
             TriggerClientEvent('dispatch:unitUpdated', -1)
         end
@@ -248,7 +248,7 @@ AddEventHandler('dispatch:updateOwnDistrict', function(district)
     exports.oxmysql:execute('UPDATE dispatch_units SET district = ? WHERE charidentifier = ?', {
         district, charData.charidentifier
     }, function(affectedRows)
-        if affectedRows > 0 then
+        if affectedRows and #affectedRows > 0 then
             print("^2[DAEXV DISPATCH]^7 Distrito actualizado: " .. district)
             TriggerClientEvent('dispatch:unitUpdated', -1)
         end
@@ -270,7 +270,7 @@ AddEventHandler('dispatch:updateOwnTown', function(town)
     exports.oxmysql:execute('UPDATE dispatch_units SET assigned_town = ? WHERE charidentifier = ?', {
         town, charData.charidentifier
     }, function(affectedRows)
-        if affectedRows > 0 then
+        if affectedRows and #affectedRows > 0 then
             print("^2[DAEXV DISPATCH]^7 Pueblo actualizado: " .. tostring(town))
             TriggerClientEvent('dispatch:unitUpdated', -1)
         end
@@ -289,7 +289,7 @@ AddEventHandler('dispatch:updateUnit', function(unitId, field, value)
     local query = string.format('UPDATE dispatch_units SET %s = ? WHERE charidentifier = ?', field)
     
     exports.oxmysql:execute(query, {value, unitId}, function(affectedRows)
-        if affectedRows > 0 then
+        if affectedRows and #affectedRows > 0 then
             print("^2[DAEXV DISPATCH]^7 Admin actualizo: " .. field .. " = " .. value)
             TriggerClientEvent('dispatch:unitUpdated', -1)
         end
@@ -305,7 +305,7 @@ AddEventHandler('dispatch:removeUnit', function()
     if not charData then return end
     
     exports.oxmysql:execute('DELETE FROM dispatch_units WHERE charidentifier = ?', {charData.charidentifier}, function(affectedRows)
-        if affectedRows > 0 then
+        if affectedRows and #affectedRows > 0 then
             print("^2[DAEXV DISPATCH]^7 Unidad removida: " .. charData.firstname .. " " .. charData.lastname)
             TriggerClientEvent('dispatch:unitUpdated', -1)
         end
@@ -320,7 +320,7 @@ AddEventHandler('playerDropped', function(reason)
     if not charData then return end
     
     exports.oxmysql:execute('DELETE FROM dispatch_units WHERE charidentifier = ?', {charData.charidentifier}, function(affectedRows)
-        if affectedRows > 0 then
+        if affectedRows and #affectedRows > 0 then
             print("^3[DAEXV DISPATCH]^7 Unidad removida por desconexion")
             TriggerClientEvent('dispatch:unitUpdated', -1)
         end

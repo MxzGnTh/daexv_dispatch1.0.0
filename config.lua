@@ -8,8 +8,9 @@ Config = {}
 Config.AllowedJobs = {
     -- SISTEMA ACTUAL - SHERIFF
     'sheriff',
-    'deputy',
+    'pinkerton',
     'marshal',
+    'police',  -- Policía sin rangos específicos
     
     -- FUTUROS SISTEMAS (Descomenta cuando implementes)
     -- 'doctor',
@@ -25,12 +26,50 @@ Config.AllowAllPlayers = true  -- Cambiar a true solo para testing
 
 -- Rangos que pueden modificar otros oficiales (administradores del dispatch)
 Config.AdminRanks = {
-    'sheriff',
-    'marshal',
-    
+    'sheriff', -- 5
+    'marshal', -- 8
+    'pinkerton', -- 5
     -- FUTUROS JEFES DE SISTEMAS (descomenta cuando sea necesario)
     -- 'doctor', -- Jefe de médicos
     -- 'fire_chief', -- Jefe de bomberos
+}
+
+-- =====================================================
+-- PERMISOS DEL SISTEMA ODE (Evaluaciones)
+-- =====================================================
+
+-- Trabajos permitidos para acceder al sistema ODE de evaluaciones
+Config.PermisosEvaluador = {
+    'sheriff',
+    'pinkerton',
+    'marshal',
+}
+
+Config.Grades = {
+    ['sheriff'] = 5,
+    ['marshal'] = 8,
+    ['pinkerton'] = 5,
+    -- FUTUROS JEFES DE SISTEMAS (descomenta cuando sea necesario)
+    -- ['doctor'] = 4,
+    -- ['fire_chief'] = 4,
+}
+
+Config.Labels = {
+    {job = 'sheriff', grade = 1, label = 'Recluta'},
+    {job = 'sheriff', grade = 2, label = 'Aprendiz'},
+    {job = 'sheriff', grade = 3, label = 'Alguacil'},
+    {job = 'sheriff', grade = 4, label = 'Supervisor'},
+    {job = 'sheriff', grade = 5, label = 'Ayudante'},
+    {job = 'sheriff', grade = 6, label = 'Adjunto'},
+    {job = 'sheriff', grade = 7, label = 'Sheriff'},
+    {job = 'pinkerton', grade = 3, label = 'Alguacil'},
+    {job = 'pinkerton', grade = 4, label = 'Supervisor'},
+    {job = 'pinkerton', grade = 5, label = 'Ayudante'},
+    {job = 'pinkerton', grade = 6, label = 'Adjunto'},
+    {job = 'pinkerton', grade = 7, label = 'Sheriff'},
+    {job = 'marshal', grade = 8, label = 'Adjunto'},
+    {job = 'marshal', grade = 9, label = 'Estatal'},
+    {job = 'marshal', grade = 10, label = 'Regional'},
 }
 
 -- =====================================================
@@ -39,14 +78,10 @@ Config.AdminRanks = {
 
 -- Distritos del mapa de 1899
 Config.Districts = {
-    'Mando',
-    'Administrativo',
     'Esperando Asignacion',
     'New Hanover',
     'West Elizabeth',
-    'Ambarino',
     'Lemoyne',
-    'Nuevo Paraíso'
 }
 
 -- =====================================================
@@ -56,43 +91,31 @@ Config.Districts = {
 Config.Towns = {
     ['New Hanover'] = {
         'Valentine',
-        'Emerald Ranch',
-        'Annesburg',
-        'Van Horn'
+        --'Emerald Ranch',
     },
     ['West Elizabeth'] = {
         'Blackwater',
         'Strawberry',
-        'Manzanita Post'
-    },
-    ['Ambarino'] = {
-        'Wapiti',
-        'Colter'
     },
     ['Lemoyne'] = {
         'Saint Denis',
         'Rhodes',
-        'Lagras'
     },
-    ['Nuevo Paraíso'] = {
-        'Tumbleweed',
-        'Armadillo',
-        'Chuparosa'
-    }
 }
 
 -- Estados manuales permitidos
 Config.Status = {
     'Disponible',
     'Ocupado',
-    'Fuera de servicio',
     'Patrullando',
     'En traslado',
-    'En procedimiento'
+    'En procedimiento',
+    'Mando',
+    'Administrativo',
 }
 
--- Tecla para abrir el dispatch (F6)
-Config.OpenKey = 0x3C0A40F2 -- F6
+-- Tecla para abrir el dispatch (F4)
+Config.OpenKey = 0x1F6D95E5 -- F4
 
 -- =====================================================
 -- MENSAJES DEL SISTEMA

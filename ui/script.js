@@ -1,52 +1,48 @@
 // =====================================================
 // JAVASCRIPT - SISTEMA DE DISPATCH MANUAL 1899
-// Sin GPS, Radios, Mapas ni Iconos
+// Solo funciones del Dispatch - ODE está en ode_system.js
 // =====================================================
 
 let isAdmin = false;
 let districts = [];
 let statuses = [];
-let towns = {}; // Pueblos por distrito
+let towns = {};
 let currentUnits = [];
 
 // =====================================================
-// MODO DESARROLLO PARA LIVE SERVER
+// FUNCIÓN AUXILIAR PARA OBTENER NOMBRE DEL RECURSO
+// =====================================================
+function getResourceName() {
+    try {
+        if (typeof GetParentResourceName === 'function') {
+            return GetParentResourceName();
+        }
+    } catch (e) {
+        console.warn('[DISPATCH] GetParentResourceName no disponible');
+    }
+    return 'daexv_dispatch';
+}
+
+// =====================================================
+// MODO DESARROLLO
 // =====================================================
 const isDevelopment = !window.GetParentResourceName;
 
 if (isDevelopment) {
     console.log('[DAEXV DISPATCH] Modo desarrollo activado');
     
-    // Simular apertura automática después de cargar
     setTimeout(() => {
         openDispatch({
             isAdmin: true,
-            districts: [
-                'Mando',
-                'Esperando Asignacion',
-                'New Hanover',
-                'West Elizabeth',
-                'Ambarino',
-                'Lemoyne',
-                'Nuevo Paraíso'
-            ],
-            statuses: [
-                'Disponible',
-                'Ocupado',
-                'Fuera de servicio',
-                'Patrullando',
-                'En traslado'
-            ],
+            districts: ['Mando', 'Esperando Asignacion', 'New Hanover', 'West Elizabeth', 'Lemoyne'],
+            statuses: ['Disponible', 'Ocupado', 'Fuera de servicio', 'Patrullando', 'En traslado'],
             towns: {
-                'New Hanover': ['Valentine', 'Emerald Ranch', 'Annesburg', 'Van Horn'],
-                'West Elizabeth': ['Blackwater', 'Strawberry', 'Manzanita Post'],
-                'Ambarino': ['Wapiti', 'Colter'],
-                'Lemoyne': ['Saint Denis', 'Rhodes', 'Lagras'],
-                'Nuevo Paraíso': ['Tumbleweed', 'Armadillo', 'Chuparosa']
+                'New Hanover': ['Valentine'],
+                'West Elizabeth': ['Blackwater', 'Strawberry'],
+                'Lemoyne': ['Saint Denis', 'Rhodes'],
             }
         });
         
-        // Simular unidades de prueba
         setTimeout(() => {
             updateUnitsDisplay([
                 {
@@ -59,50 +55,6 @@ if (isDevelopment) {
                     assigned_town: 'Valentine',
                     status: 'Disponible',
                     last_update: new Date().toISOString()
-                },
-                {
-                    id: 2,
-                    charidentifier: 2,
-                    firstname: 'Arthur',
-                    lastname: 'Morgan',
-                    job: 'deputy',
-                    district: 'Mando',
-                    assigned_town: 'Blackwater',
-                    status: 'Patrullando',
-                    last_update: new Date().toISOString()
-                },
-                {
-                    id: 3,
-                    charidentifier: 3,
-                    firstname: 'Sadie',
-                    lastname: 'Adler',
-                    job: 'deputy',
-                    district: 'Mando',
-                    assigned_town: 'Saint Denis',
-                    status: 'Ocupado',
-                    last_update: new Date().toISOString()
-                },
-                {
-                    id: 4,
-                    charidentifier: 4,
-                    firstname: 'Charles',
-                    lastname: 'Smith',
-                    job: 'marshal',
-                    district: 'Lemoyne',
-                    assigned_town: 'Rhodes',
-                    status: 'Disponible',
-                    last_update: new Date().toISOString()
-                },
-                {
-                    id: 5,
-                    charidentifier: 5,
-                    firstname: 'Javier',
-                    lastname: 'Escuella',
-                    job: 'deputy',
-                    district: 'New Hanover',
-                    assigned_town: 'Annesburg',
-                    status: 'En traslado',
-                    last_update: new Date().toISOString()
                 }
             ]);
         }, 500);
@@ -112,39 +64,49 @@ if (isDevelopment) {
 // =====================================================
 // INICIALIZACIÓN
 // =====================================================
-
 window.addEventListener('DOMContentLoaded', () => {
-    // Event listeners para botones
-    document.getElementById('btn-close').addEventListener('click', closeDispatch);
-    document.getElementById('btn-register').addEventListener('click', registerUnit);
-    document.getElementById('btn-update-status').addEventListener('click', updateOwnStatus);
-    document.getElementById('btn-update-district').addEventListener('click', updateOwnDistrict);
-    document.getElementById('btn-update-town').addEventListener('click', updateOwnTown);
-    document.getElementById('btn-refresh').addEventListener('click', refreshUnits);
-    document.getElementById('alert-ok-btn').addEventListener('click', closeAlert);
+    const btnClose = document.getElementById('btn-close');
+    const btnRegister = document.getElementById('btn-register');
+    const btnEndService = document.getElementById('btn-end-service');
+    const btnUpdateStatus = document.getElementById('btn-update-status');
+    const btnUpdateDistrict = document.getElementById('btn-update-district');
+    const btnUpdateTown = document.getElementById('btn-update-town');
+    const btnRefresh = document.getElementById('btn-refresh');
+    const alertOkBtn = document.getElementById('alert-ok-btn');
+    const personalDistrict = document.getElementById('personal-district');
+
+    if (btnClose) btnClose.addEventListener('click', closeDispatch);
+    if (btnRegister) btnRegister.addEventListener('click', registerUnit);
+    if (btnEndService) btnEndService.addEventListener('click', endService);
+    if (btnUpdateStatus) btnUpdateStatus.addEventListener('click', updateOwnStatus);
+    if (btnUpdateDistrict) btnUpdateDistrict.addEventListener('click', updateOwnDistrict);
+    if (btnUpdateTown) btnUpdateTown.addEventListener('click', updateOwnTown);
+    if (btnRefresh) btnRefresh.addEventListener('click', refreshUnits);
+    if (alertOkBtn) alertOkBtn.addEventListener('click', closeAlert);
     
-    // Actualizar lista de pueblos cuando cambia el distrito
-    document.getElementById('personal-district').addEventListener('change', (e) => {
-        updatePersonalTownSelector(e.target.value);
-    });
+    if (personalDistrict) {
+        personalDistrict.addEventListener('change', (e) => {
+            updatePersonalTownSelector(e.target.value);
+        });
+    }
     
-    // Tecla ESC para cerrar
     document.addEventListener('keyup', (e) => {
         if (e.key === 'Escape') {
             const alertModal = document.getElementById('custom-alert');
-            if (!alertModal.classList.contains('hidden')) {
+            if (alertModal && !alertModal.classList.contains('hidden')) {
                 closeAlert();
             } else {
                 closeDispatch();
             }
         }
     });
+
+    console.log('[DISPATCH] Script principal cargado v2.0 Limpio');
 });
 
 // =====================================================
 // COMUNICACIÓN CON LUA
 // =====================================================
-
 window.addEventListener('message', (event) => {
     const data = event.data;
     
@@ -158,85 +120,114 @@ window.addEventListener('message', (event) => {
         case 'updateUnits':
             updateUnitsDisplay(data.units);
             break;
+        case 'loadConfig':
+            loadConfiguration(data);
+            break;
+        case 'showAlert':
+            showAlert(data.message);
+            break;
     }
 });
 
 // =====================================================
-// SISTEMA DE ALERTAS PERSONALIZADO
+// SISTEMA DE ALERTAS
 // =====================================================
-
 function showAlert(message) {
     const alertModal = document.getElementById('custom-alert');
     const alertMessage = document.getElementById('alert-message');
     
-    alertMessage.textContent = message;
-    alertModal.classList.remove('hidden');
-    
-    // Focus en el botón OK
-    setTimeout(() => {
-        document.getElementById('alert-ok-btn').focus();
-    }, 100);
+    if (alertModal && alertMessage) {
+        alertMessage.textContent = message;
+        alertModal.classList.remove('hidden');
+        
+        setTimeout(() => {
+            const okBtn = document.getElementById('alert-ok-btn');
+            if (okBtn) okBtn.focus();
+        }, 100);
+    }
 }
 
 function closeAlert() {
     const alertModal = document.getElementById('custom-alert');
-    alertModal.classList.add('hidden');
+    if (alertModal) {
+        alertModal.classList.add('hidden');
+    }
 }
 
 // =====================================================
-// FUNCIONES PRINCIPALES
+// FUNCIONES PRINCIPALES DISPATCH
 // =====================================================
-
-function openDispatch(data) {
+function loadConfiguration(data) {
+    console.log('[DISPATCH] Cargando configuración...', data);
+    
     isAdmin = data.isAdmin || false;
     districts = data.districts || [];
     statuses = data.statuses || [];
     towns = data.towns || {};
-    
-    // Mostrar indicador de admin
-    const adminIndicator = document.getElementById('admin-indicator');
-    if (isAdmin) {
-        adminIndicator.classList.remove('hidden', 'fade-out');
-        
-        // Ocultar después de 10 segundos con animación
-        setTimeout(() => {
-            adminIndicator.classList.add('fade-out');
-            
-            // Ocultar completamente después de la animación
-            setTimeout(() => {
-                adminIndicator.classList.add('hidden');
-            }, 500);
-        }, 10000);
-    } else {
-        adminIndicator.classList.add('hidden');
+}
+
+function openDispatch(data) {
+    if (data) {
+        loadConfiguration(data);
     }
     
-    // Poblar selectores
+    isAdmin = isAdmin || (data && data.isAdmin) || false;
+    districts = districts.length > 0 ? districts : (data && data.districts) || [];
+    statuses = statuses.length > 0 ? statuses : (data && data.statuses) || [];
+    towns = Object.keys(towns).length > 0 ? towns : (data && data.towns) || {};
+    
+    const adminIndicator = document.getElementById('admin-indicator');
+    const quickNav = document.getElementById('dispatch-quick-nav');
+    
+    if (adminIndicator && quickNav) {
+        if (isAdmin) {
+            adminIndicator.classList.remove('hidden', 'fade-out');
+            quickNav.classList.add('hidden');
+            
+            setTimeout(() => {
+                adminIndicator.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    adminIndicator.classList.add('hidden');
+                    quickNav.classList.remove('hidden');
+                    quickNav.classList.add('fade-in');
+                }, 500);
+            }, 4000);
+        } else {
+            adminIndicator.classList.add('hidden');
+            quickNav.classList.remove('hidden');
+            quickNav.classList.add('fade-in');
+        }
+    }
+    
     populateSelects();
     
-    // Mostrar panel
-    document.getElementById('dispatch-container').classList.remove('hidden');
+    const dispatchContainer = document.getElementById('dispatch-container');
+    if (dispatchContainer) {
+        dispatchContainer.classList.remove('hidden');
+    }
 }
 
 function hideDispatch() {
-    document.getElementById('dispatch-container').classList.add('hidden');
+    const dispatchContainer = document.getElementById('dispatch-container');
+    if (dispatchContainer) {
+        dispatchContainer.classList.add('hidden');
+    }
 }
 
 function closeDispatch() {
-    // Ocultar panel inmediatamente
     hideDispatch();
     
     if (isDevelopment) {
         return;
     }
     
-    // Notificar al cliente que se cerró
-    fetch(`https://${GetParentResourceName()}/close`, {
+    fetch(`https://${getResourceName()}/close`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
     }).catch(err => {
-        console.error('[DAEXV DISPATCH] Error al cerrar:', err);
+        console.error('[DISPATCH] Error al cerrar:', err);
     });
 }
 
@@ -245,38 +236,40 @@ function populateSelects() {
     const statusSelect = document.getElementById('personal-status');
     const townSelect = document.getElementById('personal-town');
     
-    // Limpiar selectores
-    districtSelect.innerHTML = '<option value="">Seleccionar distrito</option>';
-    statusSelect.innerHTML = '<option value="">Seleccionar estado</option>';
-    townSelect.innerHTML = '<option value="">Sin asignar</option>';
+    if (districtSelect) {
+        districtSelect.innerHTML = '<option value="">Seleccionar distrito</option>';
+        districts.forEach(district => {
+            const option = document.createElement('option');
+            option.value = district;
+            option.textContent = district;
+            districtSelect.appendChild(option);
+        });
+    }
     
-    // Poblar distritos
-    districts.forEach(district => {
-        const option = document.createElement('option');
-        option.value = district;
-        option.textContent = district;
-        districtSelect.appendChild(option);
-    });
+    if (statusSelect) {
+        statusSelect.innerHTML = '<option value="">Seleccionar estado</option>';
+        statuses.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status;
+            option.textContent = status;
+            statusSelect.appendChild(option);
+        });
+    }
     
-    // Poblar estados
-    statuses.forEach(status => {
-        const option = document.createElement('option');
-        option.value = status;
-        option.textContent = status;
-        statusSelect.appendChild(option);
-    });
+    if (townSelect) {
+        townSelect.innerHTML = '<option value="">Sin asignar</option>';
+    }
 }
 
 function updatePersonalTownSelector(district) {
     const townSelect = document.getElementById('personal-town');
+    if (!townSelect) return;
+    
     townSelect.innerHTML = '<option value="">Sin asignar</option>';
     
-    // Si está en "Mando", mostrar TODOS los pueblos de TODOS los distritos
     if (district === 'Mando') {
-        // Agregar todos los pueblos organizados por distrito
         Object.keys(towns).forEach(districtName => {
             if (towns[districtName] && towns[districtName].length > 0) {
-                // Crear optgroup para organizar visualmente
                 const optgroup = document.createElement('optgroup');
                 optgroup.label = districtName;
                 
@@ -291,7 +284,6 @@ function updatePersonalTownSelector(district) {
             }
         });
     } else if (district && towns[district]) {
-        // Para otros distritos, solo mostrar sus pueblos
         towns[district].forEach(town => {
             const option = document.createElement('option');
             option.value = town;
@@ -304,43 +296,62 @@ function updatePersonalTownSelector(district) {
 // =====================================================
 // ACTUALIZACIÓN DE UNIDADES
 // =====================================================
-
 function updateUnitsDisplay(units) {
     currentUnits = units || [];
     
-    // Actualizar hora
     const now = new Date();
-    document.getElementById('last-update-time').textContent = 
-        now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const lastUpdateTime = document.getElementById('last-update-time');
+    if (lastUpdateTime) {
+        lastUpdateTime.textContent = now.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+    }
     
-    // Agrupar unidades por distrito
     const unitsByDistrict = {};
     
     districts.forEach(district => {
-        unitsByDistrict[district] = [];
+        unitsByDistrict[district] = {
+            total: [],
+            byTown: {}
+        };
+        
+        if (towns[district]) {
+            towns[district].forEach(town => {
+                unitsByDistrict[district].byTown[town] = [];
+            });
+        }
     });
     
     currentUnits.forEach(unit => {
         if (unitsByDistrict[unit.district]) {
-            unitsByDistrict[unit.district].push(unit);
+            unitsByDistrict[unit.district].total.push(unit);
+            
+            if (unit.assigned_town && unitsByDistrict[unit.district].byTown[unit.assigned_town]) {
+                unitsByDistrict[unit.district].byTown[unit.assigned_town].push(unit);
+            }
         }
     });
     
-    // Renderizar distritos
     const container = document.getElementById('districts-container');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     districts.forEach(district => {
-        const districtCard = createDistrictCard(district, unitsByDistrict[district]);
+        const districtCard = createDistrictCardWithTowns(district, unitsByDistrict[district]);
         container.appendChild(districtCard);
     });
 }
 
-function createDistrictCard(districtName, units) {
+function createDistrictCardWithTowns(districtName, districtData) {
     const card = document.createElement('div');
     card.className = 'district-card';
     
-    // Header del distrito
+    const units = districtData.total;
+    const townGroups = districtData.byTown;
+    
     const header = document.createElement('div');
     header.className = 'district-header';
     
@@ -356,10 +367,31 @@ function createDistrictCard(districtName, units) {
     header.appendChild(count);
     card.appendChild(header);
     
-    // Tabla de unidades
+    const hasTowns = towns[districtName] && towns[districtName].length > 0;
+    
     if (units.length > 0) {
-        const table = createUnitsTable(units);
-        card.appendChild(table);
+        if (hasTowns) {
+            const townsContainer = document.createElement('div');
+            townsContainer.className = 'towns-container';
+            
+            towns[districtName].forEach(townName => {
+                const townUnits = townGroups[townName] || [];
+                const townSection = createTownSection(townName, townUnits, districtName);
+                townsContainer.appendChild(townSection);
+            });
+            
+            const unassignedUnits = units.filter(u => !u.assigned_town || !townGroups[u.assigned_town]);
+            if (unassignedUnits.length > 0) {
+                const unassignedSection = createTownSection('Sin Pueblo Asignado', unassignedUnits, districtName);
+                unassignedSection.classList.add('unassigned-town');
+                townsContainer.appendChild(unassignedSection);
+            }
+            
+            card.appendChild(townsContainer);
+        } else {
+            const table = createUnitsTable(units);
+            card.appendChild(table);
+        }
     } else {
         const empty = document.createElement('div');
         empty.className = 'empty-district';
@@ -370,55 +402,79 @@ function createDistrictCard(districtName, units) {
     return card;
 }
 
+function createTownSection(townName, units, districtName) {
+    const section = document.createElement('div');
+    section.className = 'town-section';
+    
+    const townHeader = document.createElement('div');
+    townHeader.className = 'town-header';
+    
+    const townTitle = document.createElement('h4');
+    townTitle.className = 'town-name';
+    townTitle.innerHTML = `<span class="town-icon">���</span> ${townName}`;
+    
+    const townCount = document.createElement('span');
+    townCount.className = 'town-unit-count';
+    townCount.textContent = `${units.length} ${units.length === 1 ? 'oficial' : 'oficiales'}`;
+    
+    townHeader.appendChild(townTitle);
+    townHeader.appendChild(townCount);
+    section.appendChild(townHeader);
+    
+    if (units.length > 0) {
+        const table = createUnitsTable(units);
+        section.appendChild(table);
+    } else {
+        const empty = document.createElement('div');
+        empty.className = 'empty-town';
+        empty.textContent = `No hay oficiales asignados a ${townName}`;
+        section.appendChild(empty);
+    }
+    
+    return section;
+}
+
 function createUnitsTable(units) {
     const table = document.createElement('table');
     table.className = 'units-table';
     
-    // Header
     const thead = document.createElement('thead');
     thead.innerHTML = `
         <tr>
             <th>Oficial</th>
             <th>Rango</th>
-            ${isAdmin ? '<th>Pueblo</th>' : ''}
+            <th>Pueblo</th>
             <th>Estado</th>
             ${isAdmin ? '<th>Acciones</th>' : ''}
         </tr>
     `;
     table.appendChild(thead);
     
-    // Body
     const tbody = document.createElement('tbody');
     
     units.forEach(unit => {
         const row = document.createElement('tr');
         
-        // Nombre completo
         const nameCell = document.createElement('td');
         nameCell.textContent = `${unit.firstname} ${unit.lastname}`;
         row.appendChild(nameCell);
         
-        // Rango/Job
         const jobCell = document.createElement('td');
-        jobCell.textContent = capitalizeFirst(unit.job);
+        jobCell.textContent = capitalizeFirst(unit.job || 'Sin rango');
         row.appendChild(jobCell);
         
-        // Pueblo asignado (solo admin)
-        if (isAdmin) {
-            const townCell = document.createElement('td');
-            if (unit.assigned_town) {
-                const townBadge = document.createElement('span');
-                townBadge.className = 'town-badge';
-                townBadge.textContent = `★ ${unit.assigned_town}`;
-                townBadge.title = 'Mando del pueblo';
-                townCell.appendChild(townBadge);
-            } else {
-                townCell.textContent = '-';
-            }
-            row.appendChild(townCell);
+        const townCell = document.createElement('td');
+        if (unit.assigned_town) {
+            const townBadge = document.createElement('span');
+            townBadge.className = 'town-badge';
+            townBadge.textContent = `★ ${unit.assigned_town}`;
+            townBadge.title = 'Mando del pueblo';
+            townCell.appendChild(townBadge);
+        } else {
+            townCell.textContent = '-';
         }
+        row.appendChild(townCell);
         
-        // Estado
         const statusCell = document.createElement('td');
         const statusBadge = document.createElement('span');
         statusBadge.className = `status-badge status-${normalizeStatus(unit.status)}`;
@@ -426,104 +482,42 @@ function createUnitsTable(units) {
         statusCell.appendChild(statusBadge);
         row.appendChild(statusCell);
         
-        // Acciones (solo admin)
         if (isAdmin) {
             const actionsCell = document.createElement('td');
             actionsCell.className = 'admin-controls';
             
-            // Select de estado
             const statusSelect = document.createElement('select');
             statusSelect.innerHTML = '<option value="">Cambiar estado</option>';
             statuses.forEach(status => {
                 const option = document.createElement('option');
                 option.value = status;
                 option.textContent = status;
-                if (status === unit.status) {
-                    option.selected = true;
-                }
+                if (status === unit.status) option.selected = true;
                 statusSelect.appendChild(option);
             });
             statusSelect.addEventListener('change', (e) => {
                 if (e.target.value) {
-                    // Usar charidentifier en lugar de id
                     updateUnit(unit.charidentifier, 'status', e.target.value);
                 }
             });
             
-            // Select de distrito
             const districtSelect = document.createElement('select');
             districtSelect.innerHTML = '<option value="">Cambiar distrito</option>';
             districts.forEach(district => {
                 const option = document.createElement('option');
                 option.value = district;
                 option.textContent = district;
-                if (district === unit.district) {
-                    option.selected = true;
-                }
+                if (district === unit.district) option.selected = true;
                 districtSelect.appendChild(option);
             });
             districtSelect.addEventListener('change', (e) => {
                 if (e.target.value) {
-                    // Usar charidentifier en lugar de id
                     updateUnit(unit.charidentifier, 'district', e.target.value);
                 }
             });
             
-            // Select de pueblo (solo para distritos con pueblos)
-            const townSelect = document.createElement('select');
-            townSelect.innerHTML = '<option value="">Asignar pueblo</option>';
-            
-            // Agregar opción de "Sin asignar"
-            const noneOption = document.createElement('option');
-            noneOption.value = 'NULL';
-            noneOption.textContent = 'Sin asignar';
-            if (!unit.assigned_town) {
-                noneOption.selected = true;
-            }
-            townSelect.appendChild(noneOption);
-            
-            // Si está en "Mando", mostrar TODOS los pueblos de TODOS los distritos
-            if (unit.district === 'Mando') {
-                Object.keys(towns).forEach(districtName => {
-                    if (towns[districtName] && towns[districtName].length > 0) {
-                        // Crear optgroup para organizar visualmente
-                        const optgroup = document.createElement('optgroup');
-                        optgroup.label = districtName;
-                        
-                        towns[districtName].forEach(town => {
-                            const option = document.createElement('option');
-                            option.value = town;
-                            option.textContent = town;
-                            if (town === unit.assigned_town) {
-                                option.selected = true;
-                            }
-                            optgroup.appendChild(option);
-                        });
-                        
-                        townSelect.appendChild(optgroup);
-                    }
-                });
-            } else if (towns[unit.district]) {
-                // Para otros distritos, solo mostrar sus pueblos
-                towns[unit.district].forEach(town => {
-                    const option = document.createElement('option');
-                    option.value = town;
-                    option.textContent = town;
-                    if (town === unit.assigned_town) {
-                        option.selected = true;
-                    }
-                    townSelect.appendChild(option);
-                });
-            }
-            
-            townSelect.addEventListener('change', (e) => {
-                const value = e.target.value === 'NULL' || e.target.value === '' ? null : e.target.value;
-                updateUnit(unit.charidentifier, 'assigned_town', value);
-            });
-            
             actionsCell.appendChild(statusSelect);
             actionsCell.appendChild(districtSelect);
-            actionsCell.appendChild(townSelect);
             row.appendChild(actionsCell);
         }
         
@@ -537,11 +531,10 @@ function createUnitsTable(units) {
 // =====================================================
 // ACCIONES DEL USUARIO
 // =====================================================
-
 function registerUnit() {
-    const district = document.getElementById('personal-district').value;
-    const status = document.getElementById('personal-status').value;
-    const townValue = document.getElementById('personal-town').value;
+    const district = document.getElementById('personal-district')?.value;
+    const status = document.getElementById('personal-status')?.value;
+    const townValue = document.getElementById('personal-town')?.value;
     const town = townValue === '' ? null : townValue;
     
     if (!district || !status) {
@@ -554,15 +547,30 @@ function registerUnit() {
         return;
     }
     
-    fetch(`https://${GetParentResourceName()}/registerUnit`, {
+    fetch(`https://${getResourceName()}/registerUnit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ district, status, town })
     });
 }
 
+function endService() {
+    if (isDevelopment) {
+        const confirmed = confirm('¿Estás seguro de que deseas salir de servicio?');
+        if (!confirmed) return;
+        showAlert('Has salido de servicio correctamente.');
+        return;
+    }
+    
+    fetch(`https://${getResourceName()}/endService`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    });
+}
+
 function updateOwnStatus() {
-    const status = document.getElementById('personal-status').value;
+    const status = document.getElementById('personal-status')?.value;
     
     if (!status) {
         showAlert('Debes seleccionar un estado');
@@ -574,7 +582,7 @@ function updateOwnStatus() {
         return;
     }
     
-    fetch(`https://${GetParentResourceName()}/updateOwnStatus`, {
+    fetch(`https://${getResourceName()}/updateOwnStatus`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -582,7 +590,7 @@ function updateOwnStatus() {
 }
 
 function updateOwnDistrict() {
-    const district = document.getElementById('personal-district').value;
+    const district = document.getElementById('personal-district')?.value;
     
     if (!district) {
         showAlert('Debes seleccionar un distrito');
@@ -594,7 +602,7 @@ function updateOwnDistrict() {
         return;
     }
     
-    fetch(`https://${GetParentResourceName()}/updateOwnDistrict`, {
+    fetch(`https://${getResourceName()}/updateOwnDistrict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ district })
@@ -602,7 +610,7 @@ function updateOwnDistrict() {
 }
 
 function updateOwnTown() {
-    const townValue = document.getElementById('personal-town').value;
+    const townValue = document.getElementById('personal-town')?.value;
     const town = townValue === '' ? null : townValue;
     
     if (isDevelopment) {
@@ -610,7 +618,7 @@ function updateOwnTown() {
         return;
     }
     
-    fetch(`https://${GetParentResourceName()}/updateOwnTown`, {
+    fetch(`https://${getResourceName()}/updateOwnTown`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ town })
@@ -623,7 +631,7 @@ function updateUnit(unitId, field, value) {
         return;
     }
     
-    fetch(`https://${GetParentResourceName()}/updateUnit`, {
+    fetch(`https://${getResourceName()}/updateUnit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ unitId, field, value })
@@ -636,7 +644,7 @@ function refreshUnits() {
         return;
     }
     
-    fetch(`https://${GetParentResourceName()}/refreshUnits`, {
+    fetch(`https://${getResourceName()}/refreshUnits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
@@ -646,12 +654,14 @@ function refreshUnits() {
 // =====================================================
 // UTILIDADES
 // =====================================================
-
 function capitalizeFirst(str) {
+    if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function normalizeStatus(status) {
+    if (!status) return 'fuera';
+    
     const normalized = status.toLowerCase()
         .replace(/\s+/g, '')
         .normalize("NFD")
@@ -665,3 +675,5 @@ function normalizeStatus(status) {
     
     return 'fuera';
 }
+
+console.log('[DAEXV DISPATCH] Script principal cargado v2.0 - Limpio');

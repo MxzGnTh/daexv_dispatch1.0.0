@@ -84,9 +84,9 @@ Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
         
-        -- Detectar F6 (key code 167)
-        if IsControlJustReleased(0, 0xF3830D8E) then -- F6
-            print("^3[DAEXV DISPATCH]^7 Tecla F6 presionada")
+        -- Detectar F4 (key code 115)
+        if IsControlJustReleased(0, 0x1F6D95E5) then -- F4
+            print("^3[DAEXV DISPATCH]^7 Tecla F4 presionada")
             ToggleDispatch()
         end
     end

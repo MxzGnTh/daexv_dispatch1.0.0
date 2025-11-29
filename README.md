@@ -1,383 +1,346 @@
-# 📜 SISTEMA DE DISPATCH MANUAL 1899
+# 📋 SISTEMA DISPATCH + ODE V2.0 - DOCUMENTACIÓN COMPLETA
 
-**Sistema de Dispatch contextualizado al año 1899 para RedM con VORP Framework**
+## 🎯 DESCRIPCIÓN GENERAL
 
-Sin GPS, Sin Radios, Sin Mapas, Sin Iconos. Todo es manual y administrativo.
-
----
-
-## 📋 DESCRIPCIÓN
-
-Sistema completo de Dispatch para el Departamento del Sheriff ambientado en 1899. Permite a los oficiales registrarse manualmente en distritos, actualizar su estado y gestionar unidades de forma administrativa, tal como se hacía en la época del Viejo Oeste.
-
-### ✨ Características Principales
-
-- ✅ Panel de Dispatch con tecla **F6**
-- ✅ Registro manual de oficiales por distrito
-- ✅ **Sistema de Mandos** - Oficiales pueden supervisar pueblos específicos
-- ✅ **Pueblos asignables** - Mandos pueden elegir cualquier pueblo de cualquier región
-- ✅ Estados manuales (Disponible, Ocupado, Patrullando, etc.)
-- ✅ Interfaz estilo pergamino/western con estética de 1899
-- ✅ Sistema de permisos por rango
-- ✅ Administración para rangos superiores (Sheriff, Marshal)
-- ✅ Base de datos MySQL con historial de cambios
-- ✅ Sin elementos modernos ni tecnología fuera de época
-- ✅ 100% Manual - Nada automático
+Sistema unificado que integra el **Dispatch Manual 1899** con el **Departamento ODE (Officer Development & Evaluation)** en una sola interfaz, sin archivos separados.
 
 ---
 
-## 📁 ESTRUCTURA DEL RECURSO
+## ✅ PROBLEMA RESUELTO
 
+### ❌ **Error Original:**
 ```
-dispatch/
-│── fxmanifest.lua
-│── config.lua
-│── client/
-│     └── client.lua
-│── server/
-│     └── server.lua
-│── html/
-│     ├── index.html
-│     ├── styles.css
-│     └── script.js
-└── sql/
-      └── dispatch.sql
+SCRIPT ERROR: @daexv_dispatch/server/server.lua:308: attempt to compare number with table
 ```
 
----
+### ✅ **Causa del Error:**
+VORP Core tiene dos formas de obtener el personaje dependiendo de la versión:
+1. **API Nueva**: `Character` es un objeto directo
+2. **API Antigua**: `Character` es una función que requiere `Character(source)`
 
-## 🔧 INSTALACIÓN
-
-### 1. Requisitos Previos
-
-- **RedM Server** actualizado
-- **VORP Core** instalado y configurado
-- **oxmysql** instalado y configurado
-- **MySQL** o **MariaDB** funcionando
-
-### 2. Instalación del Recurso
-
-1. **Descargar o copiar** la carpeta `dispatch` en tu directorio de recursos:
-   ```
-   resources/[VORP]/dispatch/
-   ```
-
-2. **Importar la base de datos**:
-   - Abre tu gestor de MySQL (phpMyAdmin, HeidiSQL, etc.)
-   - Importa el archivo `sql/dispatch.sql`
-   - Esto creará las tablas:
-     - `dispatch_units` (Registro de unidades)
-     - `dispatch_logs` (Historial de cambios)
-
-3. **Configurar el recurso**:
-   - Abre `config.lua`
-   - Ajusta los trabajos permitidos si es necesario:
-     ```lua
-     Config.AllowedJobs = {
-         'sheriff',
-         'deputy',
-         'marshal'
-     }
-     ```
-   - Puedes modificar distritos y estados según tu servidor
-
-4. **Añadir al server.cfg**:
-   ```cfg
-   ensure dispatch
-   ```
-
-5. **Reiniciar el servidor** o ejecutar:
-   ```
-   refresh
-   start dispatch
-   ```
-
----
-
-## 🎮 USO DEL SISTEMA
-
-### Para Oficiales Regulares
-
-1. **Abrir el Dispatch**:
-   - Presiona **F6** en cualquier momento
-
-2. **Registrarse en Servicio**:
-   - Selecciona tu distrito asignado
-   - Selecciona tu estado inicial (ej: "Disponible")
-   - Haz clic en "Entrar en Servicio"
-
-3. **Actualizar tu Estado**:
-   - Selecciona un nuevo estado en el menú desplegable
-   - Haz clic en "Actualizar Estado"
-
-4. **Cambiar de Distrito**:
-   - Selecciona un nuevo distrito
-   - Haz clic en "Cambiar Distrito"
-
-5. **Ver Otras Unidades**:
-   - El panel muestra todas las unidades organizadas por distrito
-   - Puedes ver nombres, rangos y estados
-
-### Para Rangos Superiores (Sheriff/Marshal)
-
-Los rangos administrativos tienen controles adicionales:
-
-- **Modificar Estados de Otros Oficiales**:
-  - En la tabla de cada unidad, usa los menús desplegables
-  - Puedes cambiar el estado de cualquier oficial
-  - Puedes reasignar oficiales a otros distritos
-
-- **Limpiar Unidades Inactivas**:
-  - Usa el comando `/dispatch:cleanup` en el chat
-  - Elimina unidades marcadas como "Fuera de servicio" de hace más de 1 hora
-
----
-
-## 🗺️ DISTRITOS DISPONIBLES
-
-Los distritos están basados en el mapa de Red Dead Redemption 2:
-
-1. **New Hanover** - Valentine, Emerald Ranch
-2. **West Elizabeth** - Blackwater, Strawberry
-3. **Ambarino** - Región montañosa del norte
-4. **Lemoyne** - Saint Denis, Rhodes
-5. **Nuevo Paraíso** - (opcional) Región desértica
-
-Puedes modificar estos distritos en `config.lua`.
-
----
-
-## 🌟 SISTEMA DE MANDOS Y PUEBLOS
-
-### ¿Qué es un Mando?
-
-Un **Mando** es un oficial especial que supervisa un pueblo específico. A diferencia de los distritos normales, los Mandos tienen **flexibilidad total** para elegir cualquier pueblo de cualquier región.
-
-### Características de los Mandos:
-
-- ✅ **Acceso a todos los pueblos** - No limitados por distrito
-- ✅ **Organización por pueblo** - Supervisión específica
-- ✅ **3-5 Mandos recomendados** - Para cobertura óptima
-- ✅ **Badge dorado ★** - Identificación visual
-
-### Pueblos Disponibles:
-
-#### New Hanover
-- Valentine, Emerald Ranch, Annesburg, Van Horn
-
-#### West Elizabeth  
-- Blackwater, Strawberry, Manzanita Post
-
-#### Ambarino
-- Wapiti, Colter
-
-#### Lemoyne
-- Saint Denis, Rhodes, Lagras
-
-#### Nuevo Paraíso
-- Tumbleweed, Armadillo, Chuparosa
-
-### Cómo usar Mandos:
-
-**Oficiales en distrito "Mando":**
-1. Seleccionar distrito "Mando"
-2. Ver TODOS los pueblos disponibles (organizados por región)
-3. Elegir cualquier pueblo (ej: Valentine, Blackwater, Saint Denis)
-4. Badge dorado ★ indica asignación
-
-**Oficiales en distrito normal:**
-- Solo ven pueblos de su distrito específico
-- Limitados a su región geográfica
-
-📖 **Documentación completa:** [MANDOS.md](MANDOS.md)
-
----
-
-## 📌 ESTADOS MANUALES
-
-Los oficiales pueden seleccionar entre:
-
-- **Disponible** - Listo para asignaciones
-- **Ocupado** - Atendiendo un caso
-- **Fuera de servicio** - No disponible
-- **Patrullando** - Recorriendo el distrito
-- **En traslado** - Movimiento entre ubicaciones
-
-Personaliza estos estados en `config.lua`.
-
----
-
-## ⚙️ CONFIGURACIÓN
-
-### Archivo `config.lua`
-
+### ✅ **Solución Implementada:**
 ```lua
--- Trabajos permitidos
-Config.AllowedJobs = {
-    'sheriff',
-    'deputy',
-    'marshal'
-}
-
--- Distritos del mapa
-Config.Districts = {
-    'New Hanover',
-    'West Elizabeth',
-    'Ambarino',
-    'Lemoyne',
-    'Nuevo Paraíso'
-}
-
--- Estados permitidos
-Config.Status = {
-    'Disponible',
-    'Ocupado',
-    'Fuera de servicio',
-    'Patrullando',
-    'En traslado'
-}
-
--- Rangos administrativos
-Config.AdminRanks = {
-    'sheriff',
-    'marshal'
-}
+local Character = User.getUsedCharacter
+-- Verificar si es una función (API antigua)
+if type(Character) == "function" then
+    Character = Character(source)
+end
 ```
+
+Esto garantiza compatibilidad con **cualquier versión de VORP Core**.
+
+---
+
+## 📁 ESTRUCTURA FINAL DEL PROYECTO
+
+```
+daexv_dispatch/
+├── client/
+│   ├── dispatch_client.lua      # Cliente del dispatch principal
+│   └── ode_client.lua            # Cliente del sistema ODE
+├── server/
+│   ├── dispatch_server.lua      # Servidor del dispatch principal
+│   └── ode_server.lua            # Servidor del sistema ODE
+├── ui/
+│   ├── dispatch.html             # INTERFAZ UNIFICADA (único archivo HTML)
+│   ├── styles.css                # Estilos integrados
+│   ├── script.js                 # JavaScript integrado
+│   └── images/                   # Recursos gráficos
+├── sql/
+│   ├── dispatch.sql              # Tablas del dispatch
+│   ├── ode_complete.sql          # Tablas ODE completas ⭐ NUEVO
+│   ├── ode_tables.sql            # (Obsoleto - mantener por compatibilidad)
+│   └── update_towns.sql          # Actualización de pueblos
+├── config.lua                    # Configuración unificada
+├── fxmanifest.lua                # Manifest actualizado v2.0
+└── README.md                     # Esta documentación
+```
+
+### ⚠️ **Archivos ELIMINADOS** (ya no existen):
+- ❌ `html/ode.html` (standalone)
+- ❌ `html/script_ode.js` (standalone)
+- ❌ `html/styles_ode.css` (standalone)
+- ❌ Documentación antigua redundante (6 archivos .md)
 
 ---
 
 ## 🗄️ BASE DE DATOS
 
-### Tabla: `dispatch_units`
+### **Archivo Principal:** `sql/ode_complete.sql`
 
-Almacena información de las unidades activas:
+Este archivo contiene **TODAS** las tablas necesarias:
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | INT | ID único auto-incremental |
-| identifier | VARCHAR(80) | Identificador de Steam/Licencia |
-| charidentifier | INT | ID del personaje en VORP |
-| firstname | VARCHAR(50) | Nombre del oficial |
-| lastname | VARCHAR(50) | Apellido del oficial |
-| jobname | VARCHAR(40) | Trabajo actual (sheriff, deputy, etc.) |
-| district | VARCHAR(40) | Distrito asignado |
-| status | VARCHAR(40) | Estado actual |
-| last_update | TIMESTAMP | Última actualización automática |
+#### 📊 **Tablas Principales:**
 
-### Tabla: `dispatch_logs`
+1. **`dispatch_units`** - Unidades activas en servicio
+2. **`dispatch_ode_fichas`** - Fichas personales de cada miembro
+3. **`dispatch_ode_autorizaciones`** - Permisos Marshal → FTO
+4. **`dispatch_ode_evaluaciones`** - Evaluaciones del curriculum (15 puntos)
+5. **`dispatch_ode_to_notes`** - Notas de instructores (TO Notes) ⭐ NUEVA
+6. **`dispatch_ode_historial`** - Historial de cambios y auditoría
 
-Historial de cambios (opcional para auditoría):
+#### 🔗 **Foreign Keys:**
+- `autorizaciones.fto_charidentifier` → `fichas.charidentifier`
+- `autorizaciones.member_charidentifier` → `fichas.charidentifier`
+- `evaluaciones.member_charidentifier` → `fichas.charidentifier`
+- `to_notes.member_charidentifier` → `fichas.charidentifier`
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | INT | ID único del log |
-| charidentifier | INT | ID del personaje afectado |
-| action | VARCHAR(100) | Acción realizada |
-| old_value | VARCHAR(100) | Valor anterior |
-| new_value | VARCHAR(100) | Valor nuevo |
-| changed_by | INT | Quién hizo el cambio |
-| timestamp | TIMESTAMP | Fecha y hora |
+#### 📈 **Vistas:**
+- `view_dispatch_ode_fichas_completas` - Estadísticas por miembro
+- `view_ode_autorizaciones_activas` - Autorizaciones vigentes
 
 ---
 
-## 🎨 INTERFAZ VISUAL
+## 👥 SISTEMA DE PERMISOS
 
-La interfaz está diseñada con:
+### 🎖️ **1. MARSHAL** (Máximo nivel)
+**Identificación:** `Config.DeptoODE.marshals` (por charidentifier)
 
-- **Estilo pergamino/western** del año 1899
-- **Colores sepia y beige** para dar aspecto antiguo
-- **Tipografías serif** (Cinzel, Playfair Display)
-- **Sin elementos modernos** (sin GPS, mapas, iconos digitales)
-- **Tablas administrativas** simples y organizadas
-- **Diseño responsivo** adaptable a diferentes resoluciones
+**Puede:**
+- ✅ Ver todas las fichas y evaluaciones
+- ✅ Crear evaluaciones para cualquier miembro
+- ✅ Editar cualquier evaluación (sin restricciones)
+- ✅ Aprobar/rechazar evaluaciones
+- ✅ **Otorgar permisos** a FTO para editar evaluaciones
+- ✅ **Revocar permisos** de FTO
+- ✅ Permitir **visualización** al usuario evaluado
+- ✅ Agregar comentarios en fichas
+- ✅ Ver historial completo
 
----
+### 👮 **2. FTO (Field Training Officer)**
+**Identificación:** `Config.DeptoODE.ftos` (por charidentifier)
 
-## 🛠️ COMANDOS
+**Puede:**
+- ✅ Ver todas las fichas
+- ✅ Crear evaluaciones para cualquier miembro
+- ✅ Editar **solo si el Marshal le otorgó permiso** para ese miembro específico
+- ✅ Otorgar **visualización** al usuario evaluado
+- ✅ Agregar comentarios en fichas
+- ❌ NO puede aprobar evaluaciones (solo Marshal)
 
-### Para Jugadores
+### 📚 **3. TO (Training Officer / Instructor)**
+**Identificación:** `Config.DeptoODE.instructores` (por charidentifier)
 
-- **F6** - Abrir/Cerrar el panel de Dispatch
+**Puede:**
+- ✅ Ver fichas de miembros
+- ✅ Agregar **Notas de Instructor (TO Notes)** en fichas
+- ❌ NO puede crear evaluaciones oficiales
+- ❌ NO puede editar evaluaciones
+- ❌ NO puede aprobar/rechazar
 
-### Para Administradores
+### 👤 **4. Usuario Evaluado**
+**Sin rol especial**
 
-- `/dispatch:cleanup` - Limpiar unidades inactivas (requiere rango admin)
-
----
-
-## 🔍 SOLUCIÓN DE PROBLEMAS
-
-### El panel no se abre con F6
-
-1. Verifica que tu personaje tenga uno de los trabajos permitidos
-2. Revisa la consola del servidor para errores
-3. Asegúrate de que VORP Core esté cargado correctamente
-
-### No aparecen las unidades
-
-1. Verifica que la base de datos esté importada correctamente
-2. Comprueba que oxmysql esté funcionando
-3. Revisa los logs del servidor para errores de MySQL
-
-### Los cambios no se guardan
-
-1. Verifica los permisos de la base de datos
-2. Asegúrate de que las tablas existan
-3. Comprueba que no haya errores en la consola del servidor
-
-### Problemas de permisos
-
-1. Verifica que los trabajos estén configurados en `config.lua`
-2. Asegúrate de que los rangos administrativos estén correctos
-3. Comprueba que el personaje tenga el trabajo asignado en VORP
+**Puede:**
+- ✅ Ver su propia ficha **solo si un Marshal o FTO le dio permiso** (`visualizacion_permitida = 1`)
+- ❌ NO puede ver fichas de otros
+- ❌ NO puede editar nada
+- ❌ Solo lectura temporal
 
 ---
 
-## 📝 NOTAS IMPORTANTES
+## 📚 CURRICULUM DE EVALUACIÓN (15 Puntos)
 
-- ⚠️ **Sin automático**: Todo debe ser actualizado manualmente por los jugadores
-- ⚠️ **Sin GPS**: No hay posiciones automáticas ni mapas
-- ⚠️ **Sin radios**: No hay sistema de comunicación integrado
-- ⚠️ **Contextualizado**: Diseñado para roleplay inmersivo del año 1899
-- ⚠️ **Base de datos**: Se recomienda hacer backups regulares
+Cada evaluación contiene **15 temas** del temario oficial:
+
+1. **Jerarquía** - Estructura del Departamento del Sheriff
+2. **Departamentos** - Departamentos y sus funciones
+3. **Derechos y Deberes** - Derechos y deberes de los ciudadanos
+4. **Aplicación de la Fuerza** - Protocolo de uso de fuerza
+5. **Uso del Arma Letal** - Cuándo usar arma letal
+6. **Acudir a un Aviso** - Procedimiento al responder avisos
+7. **Situación de Disparos** - Protocolo ante tiroteos
+8. **Inviolabilidad de la Propiedad** - Registro de propiedades
+9. **Detención de Sospechosos** - Procedimiento de arresto
+10. **Procesamiento** - Procesamiento de detenidos
+11. **Robos en Establecimientos** - Protocolo ante robos
+12. **Situaciones de Rehenes** - Protocolo de negociación
+13. **Atenuantes** - Circunstancias atenuantes
+14. **Agravantes** - Circunstancias agravantes
+15. **Límite de Multas** - Topes de sanciones económicas
+
+### **Estados de Evaluación:**
+- `borrador` - En creación
+- `en_revision` - Completada, esperando aprobación del Marshal
+- `aprobada` - Aprobada por Marshal
+- `rechazada` - Rechazada por Marshal
+- `cerrada` - Finalizada y archivada
 
 ---
 
-## 🤝 SOPORTE Y CONTRIBUCIONES
+## 🔄 FLUJO DE TRABAJO
 
-Si encuentras errores o tienes sugerencias:
+### **Escenario 1: Marshal Evalúa Directamente**
+1. Marshal abre dispatch → Tab "Depto. ODE"
+2. Busca miembro → Abre ficha
+3. Click en "Evaluar Miembro"
+4. Completa curriculum (15 puntos + observaciones)
+5. Guarda como "borrador" o "en_revision"
+6. Puede aprobar directamente
+7. **Opcional:** Otorga visualización al usuario
 
-1. Revisa los logs del servidor
-2. Verifica la configuración
-3. Consulta este README
+### **Escenario 2: FTO Evalúa con Autorización**
+1. Marshal otorga permiso:
+   - Panel de Autorizaciones → "Otorgar Permiso FTO"
+   - Selecciona FTO y miembro
+2. FTO abre dispatch → Tab "Depto. ODE"
+3. Busca miembro → Abre ficha
+4. Click en "Evaluar Miembro"
+5. Completa evaluación
+6. Guarda como "en_revision"
+7. **Marshal aprueba** la evaluación
+
+### **Escenario 3: Instructor (TO) Agrega Notas**
+1. TO abre dispatch → Tab "Depto. ODE"
+2. Busca miembro → Abre ficha
+3. Tab "Historial de Evaluaciones" → "Agregar Nota TO"
+4. Selecciona categoría del curriculum
+5. Escribe nota de entrenamiento
+6. Marca como "importante" si es necesario
+7. Guarda
+
+### **Escenario 4: Usuario Ve su Evaluación**
+1. Marshal/FTO otorga visualización temporal:
+   - Abre evaluación → "Permitir Visualización"
+2. Usuario abre dispatch → Tab "Depto. ODE"
+3. Ve su propia ficha (solo lectura)
+4. Puede ver evaluaciones aprobadas
+5. Permiso puede ser revocado en cualquier momento
+
+---
+
+## 🚀 INSTALACIÓN
+
+### **1. Importar Base de Datos**
+```sql
+-- Ejecutar en orden:
+source sql/dispatch.sql
+source sql/ode_complete.sql
+```
+
+### **2. Configurar Config.lua**
+```lua
+Config.DeptoODE = {
+    -- Identificadores de roles (charidentifier de VORP)
+    marshals = {
+        "ABC123",  -- Ejemplo: charidentifier del Marshal
+    },
+    ftos = {
+        "DEF456",  -- Ejemplo: charidentifier del FTO
+        "GHI789",
+    },
+    instructores = {
+        "JKL012",  -- Ejemplo: charidentifier del TO
+    },
+    
+    -- Curriculum completo (15 puntos)
+    curricula = {
+        {id = "jerarquia", label = "Jerarquía del Departamento"},
+        -- ... (resto de puntos)
+    }
+}
+```
+
+### **3. Reiniciar Recurso**
+```
+ensure daexv_dispatch
+```
+
+---
+
+## 🧪 TESTING
+
+### **Modo Testing (AllowAllPlayers = true)**
+```lua
+Config.AllowAllPlayers = true
+```
+
+Esto permite:
+- ✅ Cualquier jugador accede al dispatch
+- ✅ Todos son considerados "admin" temporalmente
+- ✅ Ideal para testear con 1 solo jugador
+
+### **Producción**
+```lua
+Config.AllowAllPlayers = false
+Config.AllowedJobs = {"sheriff", "marshal", "deputy"}
+```
+
+---
+
+## 📝 NOTAS TÉCNICAS
+
+### **Compatibilidad VORP:**
+El sistema detecta automáticamente la versión de VORP Core y se adapta:
+```lua
+if type(Character) == "function" then
+    Character = Character(source)
+end
+```
+
+### **Optimizaciones SQL:**
+- Índices compuestos para consultas frecuentes
+- Foreign keys para integridad referencial
+- Vistas materializadas para estadísticas
+- ON DELETE CASCADE para limpieza automática
+
+### **Seguridad:**
+- Validación de permisos en **servidor** (nunca confiar en cliente)
+- Logs de auditoría en tabla `historial`
+- Autorizaciones temporales revocables
+
+---
+
+## 🐛 SOLUCIÓN DE PROBLEMAS
+
+### **Error: "GetUser no funciona"**
+✅ **Solucionado** - Implementado fallback automático para API antigua de VORP
+
+### **No veo el dispatch**
+- Verifica que `Config.AllowAllPlayers = true` (testing)
+- O que tu `job` está en `Config.AllowedJobs`
+
+### **No puedo editar evaluaciones como FTO**
+- Necesitas autorización del Marshal
+- Marshal debe ir a "Panel de Autorizaciones" → "Otorgar Permiso"
+
+### **Usuario no ve su evaluación**
+- Marshal/FTO debe otorgar visualización explícitamente
+- En la evaluación → "Permitir Visualización"
+
+---
+
+## 📞 COMANDOS
+
+### **Abrir Dispatch:**
+```
+F6 (configurable en dispatch_client.lua)
+```
+
+### **Salir de Servicio:**
+Dentro del tab "Depto. ODE" → Botón "Salir de Servicio"
+
+---
+
+## 🎨 PERSONALIZACIÓN
+
+### **Cambiar Colores:**
+Editar `ui/styles.css` - Variables CSS al inicio del archivo
+
+### **Modificar Curriculum:**
+Editar `config.lua` → `Config.DeptoODE.curricula`
+
+### **Agregar Roles:**
+Editar `config.lua` → Agregar charidentifiers en `marshals`, `ftos` o `instructores`
 
 ---
 
 ## 📜 LICENCIA
 
-Este recurso es de código abierto y puede ser modificado para tu servidor.
-
-**Desarrollado por DAEXV**
-
-**Versión**: 1.0.0  
-**Fecha**: 2025  
-**Framework**: VORP Core  
-**Juego**: RedM (Red Dead Redemption 2)
+Este sistema es propiedad de **DAEXV** y está diseñado para servidores RedM con VORP Core.
 
 ---
 
-## 🎯 FUNCIONALIDADES FUTURAS (Opcional)
-
-Posibles mejoras que podrías añadir:
-
-- Sistema de códigos de llamadas (10-4, 10-20, etc.)
-- Registro de incidentes manuales
-- Reportes de actividad diaria
-- Sistema de fichas de criminales
-- Integración con sistema judicial
-- Libro de registro de arrestos
-
----
-
-**¡Disfruta del Dispatch Manual del año 1899! 🤠**
-# daexv_dispatch1.0.0
+**Version:** 2.0.0  
+**Última actualización:** 21 de Noviembre de 2025  
+**Autor:** DAEXV (con asistencia de GitHub Copilot)

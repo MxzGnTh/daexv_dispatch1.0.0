@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatch - Departamento del Sheriff 1899</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Contenedor principal del dispatch -->
+    <div id="dispatch-container" class="hidden">
+        <!-- Indicador de permisos de administrador -->
+        <div id="admin-indicator" class="hidden">
+            <p>⭐ AUTORIDAD SUPERIOR - Puede modificar todas las unidades</p>
+        </div>
+
+        <!-- Header estilo pergamino -->
+        <div class="dispatch-header">
+            <div class="header-ornament left"></div>
+            <div class="header-content">
+                <h1 class="dispatch-title">DEPARTAMENTO DEL SHERIFF</h1>
+                <p class="dispatch-subtitle">Registro de Unidades y Distritos - Año 1899</p>
+                <span class="dispatch-version">v1.3.0</span>
+            </div>
+            <div class="header-ornament right"></div>
+        </div>
+
+        <!-- Navbar de acceso rápido -->
+        <nav id="dispatch-quick-nav" class="dispatch-navbar hidden">
+            <button id="btn-open-avisos" class="dispatch-nav-btn avisos-nav-btn">
+                <span class="nav-btn-icon">🚨</span>
+                <span class="nav-btn-label">Avisos</span>
+                <span class="avisos-counter hidden">0</span>
+            </button>
+            <button id="btn-open-ode" class="dispatch-nav-btn ode-nav-btn">
+                <span class="nav-btn-icon">📋</span>
+                <span class="nav-btn-label">Sistema ODE</span>
+            </button>
+        </nav>
+
+        <!-- Panel de control personal -->
+        <div class="personal-panel">
+            <div class="panel-header">
+                <h2 class="section-title">Control Personal</h2>
+                <span class="panel-version">Sistema de Dispatch v1.3</span>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="personal-district">Mi Estado:</label>
+                    <select id="personal-district" class="western-select">
+                        <option value="">Seleccionar estado</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="personal-town">Mi Pueblo (Mando):</label>
+                    <select id="personal-town" class="western-select">
+                        <option value="">Sin asignar</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="personal-status">Mi Estado:</label>
+                    <select id="personal-status" class="western-select">
+                        <option value="">Seleccionar estado</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="btn-refresh" class="western-btn refresh-btn">🔄 Actualizar Registro</button>
+                    <button id="btn-register" class="western-btn">Entrar/Actualizar Servicio</button>
+                    <button id="btn-end-service" class="western-btn end-service-btn">🚪 Salir de Servicio</button>
+                    <button id="btn-update-status" class="western-btnOff">Actualizar Estado</button>
+                    <button id="btn-update-district" class="western-btnOff">Cambiar Estado</button>
+                    <button id="btn-update-town" class="western-btnOff">Cambiar Pueblo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Separador decorativo -->
+        <div class="divider"></div>
+
+        <!-- Panel de distritos -->
+        <div class="districts-panel">
+            <div class="panel-header">
+                <h2 class="section-title">Registro de Unidades por Distrito</h2>
+                <p class="last-update">Última actualización: <span id="last-update-time">--:--:--</span></p>
+            </div>
+            
+            <!-- Contenedor de todos los distritos -->
+            <div id="districts-container">
+                <!-- Los distritos se generarán dinámicamente aquí -->
+                <!-- Estructura dinámica por distrito:
+                     - Esperando Asignación (sin pueblos)
+                     - New Hanover
+                       └─ Valentine
+                     - West Elizabeth
+                       └─ Blackwater
+                       └─ Strawberry
+                     - Lemoyne
+                       └─ Saint Denis
+                       └─ Rhodes
+                -->
+            </div>
+        </div>
+
+        <!-- Botón de cerrar -->
+        <button id="btn-close" class="western-btn close-btn">✖ Cerrar Dispatch</button>
+    </div>
+
+    <!-- ========================================
+         MODAL DE SISTEMA DE AVISOS/ALERTAS
+         Sistema de gestión de emergencias críticas
+    ========================================= -->
+    <div id="avisos-system-modal" class="avisos-modal hidden">
+        <div class="avisos-modal-overlay"></div>
+        <div class="avisos-modal-container">
+            <!-- Header del modal -->
+            <div class="avisos-modal-header">
+                <div class="avisos-header-left">
+                    <span class="avisos-icon">🚨</span>
+                    <div>
+                        <h1 class="avisos-modal-title">SISTEMA DE AVISOS</h1>
+                        <p class="avisos-modal-subtitle">Emergency Alert & Response System - 1899</p>
+                    </div>
+                </div>
+                <button id="btn-close-avisos" class="avisos-close-btn">
+                    <span class="close-icon">✖</span>
+                </button>
+            </div>
+
+            <!-- Barra de estadísticas -->
+            <div class="avisos-stats-bar">
+                <div class="stat-item">
+                    <span class="stat-icon">📊</span>
+                    <div>
+                        <span class="stat-label">Total Alertas</span>
+                        <span class="stat-value" id="stat-total-alerts">0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">⏰</span>
+                    <div>
+                        <span class="stat-label">Pendientes</span>
+                        <span class="stat-value pending" id="stat-pending-alerts">0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">✅</span>
+                    <div>
+                        <span class="stat-label">Atendidas</span>
+                        <span class="stat-value completed" id="stat-completed-alerts">0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🎯</span>
+                    <div>
+                        <span class="stat-label">En Curso</span>
+                        <span class="stat-value active" id="stat-active-alerts">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="avisos-content">
+                <!-- Panel de alertas activas -->
+                <div class="avisos-panel">
+                    <div class="avisos-panel-header">
+                        <h2 class="avisos-panel-title">🔴 Alertas Activas</h2>
+                        <div class="avisos-filters">
+                            <select id="filter-alert-type" class="avisos-select">
+                                <option value="all">Todos los Tipos</option>
+                                <option value="robo">🏚️ Robo</option>
+                                <option value="secuestro">👤 Secuestro</option>
+                                <option value="disparo">🔫 Disparos</option>
+                                <option value="agresion">⚔️ Agresión</option>
+                                <option value="persecucion">🏇 Persecución</option>
+                                <option value="otro">⚠️ Otro</option>
+                            </select>
+                            <button id="btn-refresh-alerts" class="avisos-btn-refresh">🔄 Actualizar</button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de alertas -->
+                    <div id="avisos-alerts-list" class="avisos-alerts-list">
+                        <!-- Las alertas se generarán dinámicamente aquí -->
+                        <div class="avisos-empty-state">
+                            <span class="empty-icon">✓</span>
+                            <p class="empty-text">No hay alertas activas en este momento</p>
+                            <p class="empty-subtext">Las alertas de emergencia aparecerán aquí</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de historial -->
+                <div class="avisos-history-panel">
+                    <div class="avisos-panel-header">
+                        <h2 class="avisos-panel-title">📋 Historial Reciente</h2>
+                        <button id="btn-clear-history" class="avisos-btn-clear">🗑️ Limpiar</button>
+                    </div>
+                    <div id="avisos-history-list" class="avisos-history-list">
+                        <div class="avisos-empty-state small">
+                            <p class="empty-text">Sin historial</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de detalle de alerta -->
+    <div id="alert-detail-modal" class="alert-detail-modal hidden">
+        <div class="alert-detail-overlay"></div>
+        <div class="alert-detail-container">
+            <div class="alert-detail-header">
+                <h2 class="alert-detail-title">Detalle de Alerta</h2>
+                <button id="btn-close-alert-detail" class="alert-close-btn">✖</button>
+            </div>
+
+            <div class="alert-detail-content">
+                <div class="alert-detail-badge">
+                    <span id="detail-alert-type" class="alert-type-badge">ROBO</span>
+                    <span id="detail-alert-priority" class="alert-priority-badge high">PRIORIDAD ALTA</span>
+                    <span id="detail-alert-status" class="alert-status-badge pending">PENDIENTE</span>
+                </div>
+
+                <div class="alert-detail-info">
+                    <div class="detail-row">
+                        <span class="detail-label">📍 Ubicación:</span>
+                        <span id="detail-location" class="detail-value">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">🗺️ Coordenadas:</span>
+                        <span id="detail-coords" class="detail-value coords">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">🕐 Hora del Reporte:</span>
+                        <span id="detail-time" class="detail-value">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">👤 Reportado por:</span>
+                        <span id="detail-reporter" class="detail-value">-</span>
+                    </div>
+                    <div class="detail-row full">
+                        <span class="detail-label">📝 Descripción:</span>
+                        <p id="detail-description" class="detail-description">-</p>
+                    </div>
+                    <div class="detail-row" id="detail-responder-row" style="display: none;">
+                        <span class="detail-label">👮 Atendida por:</span>
+                        <span id="detail-responder" class="detail-value">-</span>
+                    </div>
+                </div>
+
+                <div class="alert-detail-actions">
+                    <button id="btn-accept-alert" class="alert-action-btn accept">
+                        <span class="btn-icon">✅</span>
+                        <span class="btn-text">Aceptar Alerta</span>
+                    </button>
+                    <button id="btn-navigate-alert" class="alert-action-btn navigate" disabled>
+                        <span class="btn-icon">🧭</span>
+                        <span class="btn-text">Navegar al Punto</span>
+                    </button>
+                    <button id="btn-complete-alert" class="alert-action-btn complete" disabled>
+                        <span class="btn-icon">🏁</span>
+                        <span class="btn-text">Marcar como Completada</span>
+                    </button>
+                    <button id="btn-cancel-alert" class="alert-action-btn cancel">
+                        <span class="btn-icon">❌</span>
+                        <span class="btn-text">Cancelar Alerta</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de alertas personalizado -->
+    <div id="custom-alert" class="custom-alert hidden">
+        <div class="alert-content">
+            <div class="alert-header">
+                <div class="alert-ornament left"></div>
+                <h3 class="alert-title">AVISO DEL DEPARTAMENTO</h3>
+                <div class="alert-ornament right"></div>
+            </div>
+            <div class="alert-body">
+                <p id="alert-message"></p>
+            </div>
+            <div class="alert-footer">
+                <button id="alert-ok-btn" class="western-btn alert-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script JavaScript -->
+    <script src="script.js"></script>
+    <script src="ode_system.js"></script>
+
+    <!-- ========================================
+         MODAL DEL SISTEMA ODE
+         Sistema de Evaluaciones 1899
+    ========================================= -->
+    <div id="ode-system-modal" class="ode-modal hidden">
+        <div class="ode-modal-overlay"></div>
+        <div class="ode-modal-container">
+            <!-- Header del Sistema ODE -->
+            <div class="ode-modal-header">
+                <div class="ode-header-content">
+                    <h1 class="ode-modal-title">SISTEMA ODE</h1>
+                    <p class="ode-modal-subtitle">Officer Development & Evaluation System - 1899</p>
+                </div>
+                <button id="btn-close-ode" class="ode-close-btn">✖</button>
+            </div>
+
+            <!-- Navegación por pestañas -->
+            <nav class="ode-tabs-nav">
+                <button class="ode-tab-btn active" data-tab="documentos">
+                    <span class="tab-icon">📋</span>
+                    <span class="tab-label">Documentos</span>
+                </button>
+                <button class="ode-tab-btn" data-tab="crear">
+                    <span class="tab-icon">➕</span>
+                    <span class="tab-label">Crear Evaluación</span>
+                </button>
+            </nav>
+
+            <!-- Contenido de las pestañas -->
+            <div class="ode-tabs-container">
+                
+                <!-- TAB 1: DOCUMENTOS (LISTA DE EVALUACIONES) -->
+                <div id="ode-tab-documentos" class="ode-tab-content active">
+                    <div class="tab-header">
+                        <h2 class="tab-title">📋 Listado de Evaluaciones</h2>
+                        <p class="tab-subtitle">Historial de evaluaciones creadas y completadas</p>
+                    </div>
+                    
+                    <!-- Buscador de Evaluaciones -->
+                    <div class="evaluaciones-search-container">
+                        <div class="search-inputs-row">
+                            <div class="search-field">
+                                <label for="buscar-evaluacion-nombre">🔍 Buscar por nombre:</label>
+                                <input 
+                                    type="text" 
+                                    id="buscar-evaluacion-nombre" 
+                                    class="ode-input"
+                                    placeholder="Nombre del evaluado o evaluador..."
+                                    autocomplete="off"
+                                />
+                            </div>
+                            <div class="search-field search-field-id">
+                                <label for="buscar-evaluacion-id">🆔 Buscar por ID:</label>
+                                <input 
+                                    type="number" 
+                                    id="buscar-evaluacion-id" 
+                                    class="ode-input"
+                                    placeholder="Ej: 15"
+                                    min="1"
+                                />
+                            </div>
+                        </div>
+                        <div class="search-buttons-row">
+                            <button id="btn-buscar-evaluaciones" class="ode-btn btn-search">
+                                🔍 Buscar
+                            </button>
+                            <button id="btn-limpiar-busqueda" class="ode-btn btn-clear">
+                                ✖ Limpiar
+                            </button>
+                            <span id="evaluaciones-count" class="search-count">Mostrando todas las evaluaciones</span>
+                            
+                            <!-- Toggle de Vista -->
+                            <div class="view-toggle-container">
+                                <button id="btn-view-cards" class="view-toggle-btn active" title="Vista de Tarjetas">
+                                    <span class="view-icon">▦</span>
+                                </button>
+                                <button id="btn-view-list" class="view-toggle-btn" title="Vista de Lista">
+                                    <span class="view-icon">☰</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="evaluaciones-list" class="evaluaciones-container">
+                        <!-- Las evaluaciones se cargarán dinámicamente aquí -->
+                        <div class="loading-state">
+                            <p>Cargando evaluaciones...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: CREAR NUEVA EVALUACIÓN -->
+                <div id="ode-tab-crear" class="ode-tab-content">
+                    <div class="tab-header">
+                        <h2 class="tab-title">➕ Crear Nueva Evaluación</h2>
+                        <p class="tab-subtitle">Registrar una nueva evaluación para un oficial</p>
+                    </div>
+
+                    <div class="crear-evaluacion-form">
+                        <!-- Sección: Buscar Oficial -->
+                        <div class="form-section">
+                            <h3 class="section-title-ode">1. Seleccionar Oficial a Evaluar</h3>
+                            
+                            <div class="form-group">
+                                <label for="buscar-jugador-input">Buscar oficial:</label>
+                                <input 
+                                    type="text" 
+                                    id="buscar-jugador-input" 
+                                    class="ode-input" 
+                                    placeholder="Escribe el nombre del oficial..."
+                                    autocomplete="off"
+                                />
+                                <div id="resultados-busqueda" class="resultados-busqueda"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Oficial seleccionado:</label>
+                                <input 
+                                    type="hidden" 
+                                    id="crear-evaluado-id"
+                                />
+                                <input 
+                                    type="text" 
+                                    id="crear-evaluado-nombre" 
+                                    class="ode-input" 
+                                    placeholder="Ningún oficial seleccionado"
+                                    readonly
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Sección: Datos de la Evaluación -->
+                        <div class="form-section">
+                            <h3 class="section-title-ode">2. Datos de la Evaluación</h3>
+                            
+                            <div class="form-group">
+                                <label for="crear-tipo">Tipo de evaluación:</label>
+                                <select id="crear-tipo" class="ode-select">
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="Evaluación Inicial">Evaluación Inicial</option>
+                                    <option value="Evaluación de Promoción">Evaluación de Promoción</option>
+                                    <option value="Recertificación">Recertificación</option>
+                                    <option value="Evaluación Disciplinaria">Evaluación Disciplinaria</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="crear-objetivo">Objetivo de la evaluación:</label>
+                                <textarea 
+                                    id="crear-objetivo" 
+                                    class="ode-textarea" 
+                                    rows="4"
+                                    placeholder="Describe el objetivo de esta evaluación (conocimientos, habilidades, competencias a evaluar)..."
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="form-actions">
+                            <button id="btn-crear-evaluacion" class="ode-btn btn-primary">
+                                ✓ Crear Evaluación
+                            </button>
+                            <button id="btn-limpiar-crear-form" class="ode-btn btn-clear">
+                                ✖ Limpiar Formulario
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         MODAL DE EDICIÓN DE CURRICULUM
+         15 Puntos de Evaluación
+    ========================================= -->
+    <div id="modal-curriculum" class="ode-modal hidden">
+        <div class="ode-modal-overlay"></div>
+        <div class="ode-modal-container modal-large">
+            <!-- Header -->
+            <div class="ode-modal-header">
+                <div class="ode-header-content">
+                    <h1 class="ode-modal-title">Curriculum de Evaluación</h1>
+                    <p class="ode-modal-subtitle">15 Puntos de Competencias - 1899</p>
+                </div>
+                <button id="btn-cerrar-modal-curriculum" class="ode-close-btn">✖</button>
+            </div>
+
+            <!-- Información de la Evaluación -->
+            <div class="eval-info-header">
+                <div class="eval-info-grid">
+                    <div class="eval-info-item">
+                        <span class="info-label">Evaluado:</span>
+                        <span class="info-value" id="modal-eval-evaluado">-</span>
+                    </div>
+                    <div class="eval-info-item">
+                        <span class="info-label">Tipo:</span>
+                        <span class="info-value" id="modal-eval-tipo">-</span>
+                    </div>
+                    <div class="eval-info-item">
+                        <span class="info-label">Fecha:</span>
+                        <span class="info-value" id="modal-eval-fecha">-</span>
+                    </div>
+                    <div class="eval-info-item">
+                        <span class="info-label">Estado:</span>
+                        <span class="badge-status" id="modal-eval-estado">-</span>
+                    </div>
+                </div>
+                <div class="eval-objetivo">
+                    <span class="info-label">Objetivo:</span>
+                    <p class="info-value" id="modal-eval-objetivo">-</p>
+                </div>
+            </div>
+
+            <!-- Lista de 15 Puntos del Curriculum -->
+            <div class="curriculum-container">
+                <h3 class="curriculum-section-title">Puntos de Evaluación (15 Competencias)</h3>
+                
+                <div id="curriculum-puntos-list" class="curriculum-list">
+                    <!-- Los 15 puntos se cargan dinámicamente desde JavaScript -->
+                    <div class="loading-state">
+                        <p>Cargando puntos de evaluación...</p>
+                    </div>
+                </div>
+
+                <!-- Observaciones Generales -->
+                <div class="observaciones-generales-section">
+                    <label for="observaciones-generales">Observaciones Generales:</label>
+                    <textarea 
+                        id="observaciones-generales" 
+                        class="ode-textarea" 
+                        rows="4"
+                        placeholder="Observaciones adicionales sobre la evaluación completa..."
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="modal-actions">
+                <button id="btn-guardar-curriculum" class="ode-btn btn-secondary">
+                    💾 Guardar Borrador
+                </button>
+                <button id="btn-enviar-evaluacion" class="ode-btn btn-primary">
+                    📤 Enviar Evaluación
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>
