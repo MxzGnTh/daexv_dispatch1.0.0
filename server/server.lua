@@ -404,6 +404,17 @@ AddEventHandler('ode:saveCheck', function(evaluationId, category, checkItem, che
     local charData = GetCharacterData(_source)
     if not charData then return end
     
+    -- Calcular puntuación del check
+    local score = 0
+    if Config.ODE and Config.ODE.Scoring then
+        score = Config.ODE.Scoring[checkValue] or 0
+    else
+        -- Valores por defecto si no hay config
+        if checkValue == 'positive' then score = 10
+        elseif checkValue == 'observed' then score = 5
+        else score = 0 end
+    end
+    
     -- Verificar si el check ya existe
     exports.oxmysql:execute('SELECT id FROM ode_evaluation_checks WHERE evaluation_id = ? AND category = ? AND check_item = ?', {
         evaluationId, category, checkItem
@@ -411,35 +422,83 @@ AddEventHandler('ode:saveCheck', function(evaluationId, category, checkItem, che
         if existing and #existing > 0 then
             -- Actualizar check existente
             local checkId = existing[1].id
-            exports.oxmysql:execute('UPDATE ode_evaluation_checks SET check_value = ?, notes = ?, checked_at = CURRENT_TIMESTAMP WHERE id = ?', {
-                checkValue, notes, checkId
+            exports.oxmysql:execute('UPDATE ode_evaluation_checks SET check_value = ?, score = ?, notes = ?, checked_at = CURRENT_TIMESTAMP WHERE id = ?', {
+                checkValue, score, notes, checkId
             }, function(affectedRows)
-                print("^2[ODE]^7 Check actualizado - ID: " .. checkId)
+                print("^2[ODE]^7 Check actualizado - ID: " .. checkId .. " Score: " .. score)
+                
+                -- Recalcular puntuación total
+                updateEvaluationScore(evaluationId)
                 
                 -- Log de cambio
                 exports.oxmysql:execute('INSERT INTO ode_logs (evaluation_id, check_id, action, new_value, changed_by) VALUES (?, ?, ?, ?, ?)', {
                     evaluationId, checkId, 'check_updated', checkValue, charData.charidentifier
                 })
                 
-                TriggerClientEvent('ode:checkSaved', _source, true)
+                TriggerClientEvent('ode:checkSaved', _source, true, score)
             end)
         else
             -- Insertar nuevo check
-            exports.oxmysql:execute('INSERT INTO ode_evaluation_checks (evaluation_id, category, check_item, check_value, notes) VALUES (?, ?, ?, ?, ?)', {
-                evaluationId, category, checkItem, checkValue, notes
+            exports.oxmysql:execute('INSERT INTO ode_evaluation_checks (evaluation_id, category, check_item, check_value, score, notes) VALUES (?, ?, ?, ?, ?, ?)', {
+                evaluationId, category, checkItem, checkValue, score, notes
             }, function(insertId)
-                print("^2[ODE]^7 Nuevo check guardado - ID: " .. insertId)
+                print("^2[ODE]^7 Nuevo check guardado - ID: " .. insertId .. " Score: " .. score)
+                
+                -- Recalcular puntuación total
+                updateEvaluationScore(evaluationId)
                 
                 -- Log de creación
                 exports.oxmysql:execute('INSERT INTO ode_logs (evaluation_id, check_id, action, new_value, changed_by) VALUES (?, ?, ?, ?, ?)', {
                     evaluationId, insertId, 'check_created', checkValue, charData.charidentifier
                 })
                 
-                TriggerClientEvent('ode:checkSaved', _source, true)
+                TriggerClientEvent('ode:checkSaved', _source, true, score)
             end)
         end
     end)
 end)
+
+-- Función para actualizar la puntuación total de una evaluación
+function updateEvaluationScore(evaluationId)
+    exports.oxmysql:execute('SELECT SUM(score) as total_score, COUNT(*) as check_count FROM ode_evaluation_checks WHERE evaluation_id = ?', {evaluationId}, function(result)
+        if result and result[1] then
+            local totalScore = result[1].total_score or 0
+            local checkCount = result[1].check_count or 0
+            
+            -- Calcular puntuación máxima (10 puntos por check)
+            local maxScore = checkCount * 10
+            local percentage = 0
+            if maxScore > 0 then
+                percentage = (totalScore / maxScore) * 100
+            end
+            
+            -- Determinar nivel de desempeño
+            local performanceLevel = 'Insuficiente'
+            if Config.ODE and Config.ODE.PerformanceLevels then
+                for _, level in ipairs(Config.ODE.PerformanceLevels) do
+                    if percentage >= level.min then
+                        performanceLevel = level.label
+                        break
+                    end
+                end
+            else
+                -- Valores por defecto
+                if percentage >= 90 then performanceLevel = 'Excelente'
+                elseif percentage >= 75 then performanceLevel = 'Bueno'
+                elseif percentage >= 60 then performanceLevel = 'Satisfactorio'
+                elseif percentage >= 40 then performanceLevel = 'Necesita Mejorar'
+                else performanceLevel = 'Insuficiente' end
+            end
+            
+            -- Actualizar evaluación
+            exports.oxmysql:execute('UPDATE ode_evaluations SET total_score = ?, max_possible_score = ?, score_percentage = ?, performance_level = ? WHERE id = ?', {
+                totalScore, maxScore, percentage, performanceLevel, evaluationId
+            })
+            
+            print("^2[ODE]^7 Puntuación actualizada - Eval: " .. evaluationId .. " Score: " .. totalScore .. "/" .. maxScore .. " (" .. string.format("%.1f", percentage) .. "%) - " .. performanceLevel)
+        end
+    end)
+end
 
 -- Actualizar notas generales de la evaluación
 RegisterNetEvent('ode:updateNotes')
@@ -470,6 +529,10 @@ AddEventHandler('ode:completeEvaluation', function(evaluationId)
     local charData = GetCharacterData(_source)
     if not charData then return end
     
+    -- Primero actualizar la puntuación final
+    updateEvaluationScore(evaluationId)
+    
+    -- Luego marcar como completada
     exports.oxmysql:execute('UPDATE ode_evaluations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', {
         'completed', evaluationId
     }, function(affectedRows)
@@ -484,7 +547,7 @@ AddEventHandler('ode:completeEvaluation', function(evaluationId)
     end)
 end)
 
--- Obtener todos los oficiales para evaluación
+-- Obtener todos los oficiales para evaluación (con estadísticas)
 RegisterNetEvent('ode:getOfficersList')
 AddEventHandler('ode:getOfficersList', function()
     local _source = source
@@ -493,10 +556,47 @@ AddEventHandler('ode:getOfficersList', function()
         return
     end
     
-    exports.oxmysql:execute('SELECT DISTINCT charidentifier, firstname, lastname, jobname FROM dispatch_units ORDER BY lastname, firstname', {}, function(officers)
+    -- Obtener oficiales con sus estadísticas de evaluación
+    exports.oxmysql:execute([[
+        SELECT 
+            du.charidentifier, 
+            du.firstname, 
+            du.lastname, 
+            du.jobname,
+            du.district,
+            du.status,
+            (SELECT COUNT(*) FROM ode_evaluations WHERE evaluated_officer_id = du.charidentifier AND status = 'completed') as eval_count,
+            (SELECT ROUND(AVG(score_percentage), 1) FROM ode_evaluations WHERE evaluated_officer_id = du.charidentifier AND status = 'completed') as avg_score,
+            (SELECT performance_level FROM ode_evaluations WHERE evaluated_officer_id = du.charidentifier AND status = 'completed' ORDER BY evaluation_date DESC LIMIT 1) as last_performance,
+            (SELECT evaluation_date FROM ode_evaluations WHERE evaluated_officer_id = du.charidentifier AND status = 'completed' ORDER BY evaluation_date DESC LIMIT 1) as last_eval_date
+        FROM dispatch_units du
+        ORDER BY du.lastname, du.firstname
+    ]], {}, function(officers)
         TriggerClientEvent('ode:receiveOfficersList', _source, officers or {})
     end)
 end)
 
+-- Obtener estadísticas generales del sistema ODE
+RegisterNetEvent('ode:getStats')
+AddEventHandler('ode:getStats', function()
+    local _source = source
+    
+    if not HasAllowedJob(_source) then
+        return
+    end
+    
+    exports.oxmysql:execute([[
+        SELECT 
+            (SELECT COUNT(*) FROM ode_evaluations WHERE status = 'completed') as total_evaluations,
+            (SELECT COUNT(DISTINCT evaluated_officer_id) FROM ode_evaluations WHERE status = 'completed') as officers_evaluated,
+            (SELECT ROUND(AVG(score_percentage), 1) FROM ode_evaluations WHERE status = 'completed') as avg_score,
+            (SELECT COUNT(*) FROM ode_evaluations WHERE status = 'in_progress') as pending_evaluations
+    ]], {}, function(result)
+        if result and result[1] then
+            TriggerClientEvent('ode:receiveStats', _source, result[1])
+        end
+    end)
+end)
+
 print("^2[DAEXV DISPATCH]^7 Servidor cargado completamente")
-print("^2[ODE]^7 Sistema ODE cargado correctamente")
+print("^2[ODE]^7 Sistema ODE cargado correctamente (con puntuación)")

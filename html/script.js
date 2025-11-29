@@ -690,6 +690,7 @@ let currentEvaluationId = null;
 let currentEvaluatedOfficer = null;
 let officersList = [];
 let evaluationChecks = {};
+let currentScore = { total: 0, max: 0, percentage: 0 };
 
 // Initialize ODE when dispatch opens
 function initODE(config) {
@@ -709,6 +710,13 @@ function showODE() {
         body: JSON.stringify({})
     }).catch(() => {});
     
+    // Request stats
+    fetch('https://daexv_dispatch/ode_getStats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    }).catch(() => {});
+    
     // Show officers list panel by default
     showODEPanel('list');
 }
@@ -716,6 +724,21 @@ function showODE() {
 function hideODE() {
     document.getElementById('ode-container').classList.add('hidden');
     document.getElementById('dispatch-container').classList.remove('hidden');
+}
+
+// Update stats dashboard
+function updateStatsDashboard(stats) {
+    if (!stats) return;
+    
+    const totalEvals = document.getElementById('stat-total-evals');
+    const officersEvaluated = document.getElementById('stat-officers-evaluated');
+    const avgScore = document.getElementById('stat-avg-score');
+    const pending = document.getElementById('stat-pending');
+    
+    if (totalEvals) totalEvals.textContent = stats.total_evaluations || 0;
+    if (officersEvaluated) officersEvaluated.textContent = stats.officers_evaluated || 0;
+    if (avgScore) avgScore.textContent = (stats.avg_score || 0) + '%';
+    if (pending) pending.textContent = stats.pending_evaluations || 0;
 }
 
 // Navigation between ODE panels
@@ -746,7 +769,7 @@ function showODEPanel(panelName) {
     }
 }
 
-// Display officers list
+// Display officers list with stats
 function displayOfficersList(officers) {
     officersList = officers;
     const container = document.getElementById('officers-list-container');
@@ -762,9 +785,48 @@ function displayOfficersList(officers) {
         card.className = 'officer-card';
         card.onclick = () => selectOfficerForEvaluation(officer);
         
+        // Determinar el color del badge de rendimiento
+        let performanceBadge = '';
+        let performanceColor = '#999';
+        if (officer.last_performance) {
+            const perfLevels = {
+                'Excelente': '#4caf50',
+                'Bueno': '#8bc34a',
+                'Satisfactorio': '#ffc107',
+                'Necesita Mejorar': '#ff9800',
+                'Insuficiente': '#f44336'
+            };
+            performanceColor = perfLevels[officer.last_performance] || '#999';
+            performanceBadge = `<span class="performance-badge" style="background-color: ${performanceColor}">${officer.last_performance}</span>`;
+        }
+        
+        // Mostrar última evaluación
+        let lastEvalInfo = '';
+        if (officer.last_eval_date) {
+            const evalDate = new Date(officer.last_eval_date).toLocaleDateString('es-ES');
+            lastEvalInfo = `<div class="officer-card-eval">Última evaluación: ${evalDate}</div>`;
+        } else {
+            lastEvalInfo = `<div class="officer-card-eval" style="color: #999;">Sin evaluaciones</div>`;
+        }
+        
+        // Mostrar promedio de puntuación
+        let scoreInfo = '';
+        if (officer.avg_score !== null && officer.avg_score !== undefined) {
+            scoreInfo = `<div class="officer-card-score">Promedio: ${officer.avg_score}%</div>`;
+        }
+        
         card.innerHTML = `
-            <div class="officer-card-name">${officer.firstname} ${officer.lastname}</div>
+            <div class="officer-card-header">
+                <div class="officer-card-name">${officer.firstname} ${officer.lastname}</div>
+                ${performanceBadge}
+            </div>
             <div class="officer-card-rank">${officer.jobname}</div>
+            <div class="officer-card-info">
+                <span class="officer-card-district">${officer.district || 'Sin distrito'}</span>
+                <span class="officer-card-evals">${officer.eval_count || 0} evaluaciones</span>
+            </div>
+            ${scoreInfo}
+            ${lastEvalInfo}
         `;
         
         container.appendChild(card);
@@ -822,6 +884,7 @@ function startEvaluation() {
 function buildEvaluationForm(evaluationId) {
     currentEvaluationId = evaluationId;
     evaluationChecks = {};
+    currentScore = { total: 0, max: 0, percentage: 0 };
     
     const container = document.getElementById('evaluation-categories-container');
     container.innerHTML = '';
@@ -831,11 +894,19 @@ function buildEvaluationForm(evaluationId) {
         return;
     }
     
-    // Set header info
+    // Calculate max possible score (10 points per check)
+    let totalChecks = 0;
+    odeConfig.Categories.forEach(cat => {
+        totalChecks += cat.items.length;
+    });
+    currentScore.max = totalChecks * 10;
+    
+    // Set header info with score counter
     document.getElementById('eval-officer-name').textContent = 
         currentEvaluatedOfficer ? `${currentEvaluatedOfficer.firstname} ${currentEvaluatedOfficer.lastname}` : 'Oficial';
-    document.getElementById('eval-date').textContent = 
-        `Fecha de Evaluación: ${new Date().toLocaleString('es-ES')}`;
+    document.getElementById('eval-date').innerHTML = 
+        `Fecha de Evaluación: ${new Date().toLocaleString('es-ES')}<br>
+        <span id="eval-score-display" class="score-display">Puntuación: 0 / ${currentScore.max} (0%)</span>`;
     
     // Build categories
     odeConfig.Categories.forEach(category => {
@@ -906,9 +977,22 @@ function saveCheck(category, itemText, value, button) {
         return;
     }
     
+    // Get score for this value
+    const scoreValues = { positive: 10, observed: 5, negative: 0 };
+    const newScore = scoreValues[value] || 0;
+    
     // Store check locally
     const checkKey = `${category}:${itemText}`;
+    const oldValue = evaluationChecks[checkKey];
+    const oldScore = oldValue ? scoreValues[oldValue] || 0 : 0;
     evaluationChecks[checkKey] = value;
+    
+    // Update total score
+    currentScore.total = currentScore.total - oldScore + newScore;
+    currentScore.percentage = currentScore.max > 0 ? Math.round((currentScore.total / currentScore.max) * 100) : 0;
+    
+    // Update score display
+    updateScoreDisplay();
     
     // Update button states
     const checkItem = button.closest('.check-item');
@@ -930,7 +1014,22 @@ function saveCheck(category, itemText, value, button) {
         })
     }).catch(() => {});
     
-    console.log(`[ODE] Check guardado: ${category} - ${itemText} = ${value}`);
+    console.log(`[ODE] Check guardado: ${category} - ${itemText} = ${value} (+${newScore} puntos)`);
+}
+
+// Update score display
+function updateScoreDisplay() {
+    const display = document.getElementById('eval-score-display');
+    if (display) {
+        // Determine performance level color
+        let color = '#f44336'; // Default red
+        if (currentScore.percentage >= 90) color = '#4caf50';
+        else if (currentScore.percentage >= 75) color = '#8bc34a';
+        else if (currentScore.percentage >= 60) color = '#ffc107';
+        else if (currentScore.percentage >= 40) color = '#ff9800';
+        
+        display.innerHTML = `Puntuación: <span style="color: ${color}; font-weight: bold;">${currentScore.total} / ${currentScore.max} (${currentScore.percentage}%)</span>`;
+    }
 }
 
 // Save evaluation notes
@@ -1064,5 +1163,8 @@ window.addEventListener('message', (event) => {
         console.log('[ODE] Notas actualizadas:', data.success);
     } else if (data.action === 'ode_evaluationCompleted') {
         console.log('[ODE] Evaluación completada:', data.success);
+    } else if (data.action === 'ode_receiveStats') {
+        console.log('[ODE] Estadísticas recibidas:', data.stats);
+        updateStatsDashboard(data.stats);
     }
 });

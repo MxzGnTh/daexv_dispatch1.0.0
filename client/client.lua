@@ -364,6 +364,23 @@ AddEventHandler('ode:receiveOfficersList', function(officers)
     })
 end)
 
+-- Recibir estadísticas del sistema ODE
+RegisterNetEvent('ode:receiveStats')
+AddEventHandler('ode:receiveStats', function(stats)
+    print("^2[ODE]^7 Estadísticas recibidas")
+    SendNUIMessage({
+        action = 'ode_receiveStats',
+        stats = stats
+    })
+end)
+
+-- Obtener estadísticas del sistema
+RegisterNUICallback('ode_getStats', function(data, cb)
+    print("^3[ODE]^7 NUI Callback: ode_getStats")
+    TriggerServerEvent('ode:getStats')
+    cb('ok')
+end)
+
 -- =====================================================
 -- LIMPIAR AL SALIR DEL JUEGO
 -- =====================================================

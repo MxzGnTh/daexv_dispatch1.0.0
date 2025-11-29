@@ -112,8 +112,25 @@ Config.Lang = {
 -- SISTEMA ODE (Officer Development & Evaluation)
 -- =====================================================
 
--- Categorías y criterios de evaluación
+-- Configuración general del sistema ODE
 Config.ODE = {
+    -- Puntuación por tipo de check
+    Scoring = {
+        positive = 10,   -- Puntos por check positivo
+        observed = 5,    -- Puntos por check observado  
+        negative = 0     -- Puntos por check negativo
+    },
+    
+    -- Niveles de desempeño basados en porcentaje
+    PerformanceLevels = {
+        { min = 90, label = 'Excelente', color = '#4caf50' },
+        { min = 75, label = 'Bueno', color = '#8bc34a' },
+        { min = 60, label = 'Satisfactorio', color = '#ffc107' },
+        { min = 40, label = 'Necesita Mejorar', color = '#ff9800' },
+        { min = 0, label = 'Insuficiente', color = '#f44336' }
+    },
+    
+    -- Categorías y criterios de evaluación
     Categories = {
         {
             name = 'Conducta Profesional',

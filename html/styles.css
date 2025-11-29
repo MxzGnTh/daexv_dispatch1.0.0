@@ -1485,3 +1485,98 @@ body {
         flex-direction: column;
     }
 }
+
+/* Enhanced Officer Cards with Stats */
+.officer-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.performance-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+}
+
+.officer-card-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--color-text-medium);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(107, 68, 35, 0.2);
+}
+
+.officer-card-district {
+    font-style: italic;
+}
+
+.officer-card-evals {
+    color: var(--color-text-light);
+}
+
+.officer-card-score {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-top: 5px;
+}
+
+.officer-card-eval {
+    font-size: 11px;
+    color: var(--color-text-medium);
+    margin-top: 3px;
+}
+
+/* Score Display in Evaluation */
+.score-display {
+    display: block;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* ODE Stats Dashboard */
+.ode-stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid var(--color-border-medium);
+    border-radius: 4px;
+}
+
+.ode-stat-box {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--color-border-medium);
+    border-radius: 4px;
+}
+
+.ode-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
+.ode-stat-label {
+    font-size: 12px;
+    color: var(--color-text-medium);
+    text-transform: uppercase;
+    margin-top: 5px;
+}
+
