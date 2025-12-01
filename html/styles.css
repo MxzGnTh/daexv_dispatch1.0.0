@@ -195,10 +195,28 @@ body {
     z-index: 9999;
 }
 
-/* Apply scrollbar to containers */
-#dispatch-container,
-#ode-container {
-    composes: custom-scrollbar;
+/* Apply custom scrollbar styles to containers */
+#dispatch-container::-webkit-scrollbar,
+#ode-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+#dispatch-container::-webkit-scrollbar-track,
+#ode-container::-webkit-scrollbar-track {
+    background: rgba(107, 68, 35, 0.15);
+    border-radius: var(--radius-md);
+}
+
+#dispatch-container::-webkit-scrollbar-thumb,
+#ode-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-border-medium) 0%, var(--color-border-dark) 100%);
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(212, 196, 168, 0.5);
+}
+
+#dispatch-container::-webkit-scrollbar-thumb:hover,
+#ode-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--color-border-dark) 0%, var(--color-text-medium) 100%);
 }
 
 /* ===================================================== */
