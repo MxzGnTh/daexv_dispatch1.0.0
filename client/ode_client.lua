@@ -50,7 +50,12 @@ end
 -- Cerrar sistema ODE
 RegisterNUICallback("cerrarODE", function(data, cb)
     odeAbierto = false
-    SetNuiFocus(false, false)
+    
+    -- Solo quitar el focus si el dispatch NO está abierto
+    -- Si dispatchAbierto es true, el dispatch sigue visible y necesita el cursor
+    if not data.dispatchAbierto then
+        SetNuiFocus(false, false)
+    end
     
     cb({success = true})
 end)

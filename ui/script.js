@@ -92,12 +92,37 @@ window.addEventListener('DOMContentLoaded', () => {
     
     document.addEventListener('keyup', (e) => {
         if (e.key === 'Escape') {
+            // Prioridad 1: Cerrar alerta custom
             const alertModal = document.getElementById('custom-alert');
             if (alertModal && !alertModal.classList.contains('hidden')) {
                 closeAlert();
-            } else {
-                closeDispatch();
+                return;
             }
+            
+            // Prioridad 2: Cerrar modal de confirmación
+            const confirmModal = document.getElementById('confirm-modal');
+            if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                confirmModal.classList.add('hidden');
+                return;
+            }
+            
+            // Prioridad 3: El ODE maneja su propio ESC (ode_system.js)
+            // Si ODE está abierto, no cerramos dispatch aquí
+            const odeModal = document.getElementById('ode-system-modal');
+            if (odeModal && !odeModal.classList.contains('hidden')) {
+                return; // ODE maneja su propio cierre
+            }
+            
+            // Prioridad 4: Cerrar avisos si está abierto
+            const avisosModal = document.getElementById('avisos-system-modal');
+            if (avisosModal && !avisosModal.classList.contains('hidden')) {
+                avisosModal.classList.add('hidden');
+                avisosModal.classList.remove('fade-in');
+                return;
+            }
+            
+            // Prioridad 5: Cerrar dispatch
+            closeDispatch();
         }
     });
 
@@ -216,6 +241,27 @@ function hideDispatch() {
 }
 
 function closeDispatch() {
+    // Primero cerrar cualquier modal ODE que esté abierto
+    const odeModal = document.getElementById('ode-system-modal');
+    if (odeModal && !odeModal.classList.contains('hidden')) {
+        odeModal.classList.add('hidden');
+        odeModal.classList.remove('fade-in');
+    }
+    
+    // Cerrar modal de curriculum si está abierto
+    const modalCurriculum = document.getElementById('modal-curriculum');
+    if (modalCurriculum && !modalCurriculum.classList.contains('hidden')) {
+        modalCurriculum.classList.add('hidden');
+        modalCurriculum.classList.remove('fade-in');
+    }
+    
+    // Cerrar modal de avisos si está abierto
+    const avisosModal = document.getElementById('avisos-system-modal');
+    if (avisosModal && !avisosModal.classList.contains('hidden')) {
+        avisosModal.classList.add('hidden');
+        avisosModal.classList.remove('fade-in');
+    }
+    
     hideDispatch();
     
     if (isDevelopment) {

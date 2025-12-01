@@ -130,11 +130,16 @@ function cerrarSistemaODE() {
     evaluacionActual = null;
     modoEdicion = false;
     
-    // Notificar al cliente (usar función segura)
+    // Verificar si el dispatch está abierto
+    const dispatchContainer = document.getElementById('dispatch-container');
+    const dispatchAbierto = dispatchContainer && !dispatchContainer.classList.contains('hidden');
+    
+    // Solo notificar cierre de ODE si el dispatch NO está abierto
+    // Si el dispatch está abierto, NO quitamos el focus del NUI
     fetch(`https://${getResourceName()}/cerrarODE`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ dispatchAbierto: dispatchAbierto })
     }).catch(e => console.log('[ODE] Fetch error (normal en desarrollo)'));
 }
 
@@ -145,12 +150,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCerrar.addEventListener('click', cerrarSistemaODE);
     }
     
-    // Cerrar con ESC
+    // Cerrar con ESC - Solo cerrar ODE si está abierto
+    // El dispatch tiene su propio listener de ESC
     document.addEventListener('keyup', (e) => {
         if (e.key === 'Escape') {
+            // Primero verificar si hay un modal de curriculum abierto
+            const modalCurriculum = document.getElementById('modal-curriculum');
+            if (modalCurriculum && !modalCurriculum.classList.contains('hidden')) {
+                cerrarModalCurriculum();
+                e.stopPropagation();
+                return;
+            }
+            
+            // Luego verificar el modal principal de ODE
             const modal = document.getElementById('ode-system-modal');
             if (modal && !modal.classList.contains('hidden')) {
                 cerrarSistemaODE();
+                e.stopPropagation();
+                return;
             }
         }
     });
