@@ -6366,3 +6366,464 @@ body {
     }
 }
 
+/* =====================================================
+   CORRECCIONES VISUALES ODE v1.4.0
+   Mejoras de UX y corrección de errores visuales
+   ===================================================== */
+
+/* ===== FIX: Formulario Crear Evaluación - Inputs grises ===== */
+#ode-tab-crear .ode-input,
+#ode-tab-crear .ode-select,
+#ode-tab-crear .ode-textarea {
+    background: #fff !important;
+    color: #2c1810 !important;
+    border: 2px solid rgba(139, 69, 19, 0.4) !important;
+}
+
+#ode-tab-crear .ode-input:focus,
+#ode-tab-crear .ode-select:focus,
+#ode-tab-crear .ode-textarea:focus {
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25) !important;
+    background: #fffef8 !important;
+}
+
+#ode-tab-crear .ode-input::placeholder,
+#ode-tab-crear .ode-textarea::placeholder {
+    color: #9a8a7a !important;
+    font-style: italic;
+}
+
+#ode-tab-crear .ode-input[readonly] {
+    background: #f5f0e8 !important;
+    color: #5a4a3a !important;
+    cursor: default;
+}
+
+/* ===== FIX: Form Section con mejor contraste ===== */
+.form-section {
+    background: #fffcf5 !important;
+    border: 2px solid rgba(139, 69, 19, 0.25) !important;
+    box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
+}
+
+.form-section:hover {
+    border-color: rgba(139, 69, 19, 0.4) !important;
+}
+
+/* ===== FIX: Select con flecha visible ===== */
+#ode-tab-crear .ode-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B4513' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 35px !important;
+}
+
+/* ===== FIX: Botones de acciones del formulario ===== */
+#ode-tab-crear .form-actions {
+    background: linear-gradient(135deg, rgba(245, 240, 232, 0.95) 0%, rgba(232, 220, 200, 0.95) 100%) !important;
+    border: 2px solid rgba(139, 69, 19, 0.3) !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+#ode-tab-crear .form-actions .ode-btn {
+    min-width: 180px;
+    padding: 14px 28px;
+}
+
+/* ===== FIX: Modal Curriculum - Estructura mejorada ===== */
+#modal-curriculum .ode-modal-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+#modal-curriculum .curriculum-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 25px 30px;
+    background: linear-gradient(180deg, #f5f0e8 0%, #ebe4d8 100%);
+}
+
+/* ===== FIX: Modal Actions siempre visible ===== */
+#modal-curriculum .modal-actions {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, #e8dcc5 0%, #d4c4a8 100%) !important;
+    border-top: 3px solid rgba(139, 69, 19, 0.4) !important;
+    padding: 18px 30px !important;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    gap: 20px !important;
+}
+
+#modal-curriculum .modal-actions .ode-btn {
+    min-width: 160px;
+    padding: 14px 28px !important;
+    font-size: 13px !important;
+}
+
+/* ===== FIX: Botón Enviar Evaluación destacado ===== */
+#btn-enviar-evaluacion {
+    background: linear-gradient(135deg, #2e8b57 0%, #1e6b3a 100%) !important;
+    border-color: #1a5d35 !important;
+    box-shadow: 0 4px 15px rgba(46, 139, 87, 0.4) !important;
+}
+
+#btn-enviar-evaluacion:hover {
+    background: linear-gradient(135deg, #3cb371 0%, #2e8b57 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 20px rgba(46, 139, 87, 0.5) !important;
+}
+
+/* ===== FIX: Botón Guardar Borrador ===== */
+#btn-guardar-curriculum {
+    background: linear-gradient(135deg, #4169e1 0%, #2c4fa8 100%) !important;
+    border-color: #2c4fa8 !important;
+    box-shadow: 0 4px 15px rgba(65, 105, 225, 0.3) !important;
+}
+
+#btn-guardar-curriculum:hover {
+    background: linear-gradient(135deg, #5a7fef 0%, #4169e1 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 20px rgba(65, 105, 225, 0.4) !important;
+}
+
+/* ===== FIX: Curriculum Item - Mejor visibilidad ===== */
+.curriculum-item {
+    background: #fff !important;
+    border: 2px solid rgba(139, 69, 19, 0.25) !important;
+    border-left: 5px solid #d4af37 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 12px;
+}
+
+.curriculum-item:hover {
+    border-color: rgba(139, 69, 19, 0.4) !important;
+    border-left-color: #b8860b !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateX(3px);
+}
+
+/* ===== FIX: Observación campo con mejor contraste ===== */
+.observacion-field .observacion-input {
+    background: #fff !important;
+    border: 2px solid rgba(139, 69, 19, 0.25) !important;
+}
+
+.observacion-field .observacion-input:focus {
+    background: #fffef8 !important;
+    border-color: #d4af37 !important;
+}
+
+/* ===== FIX: Observaciones Generales ===== */
+.observaciones-generales-section {
+    background: #fffcf5 !important;
+    border: 2px solid rgba(139, 69, 19, 0.3) !important;
+    margin-top: 25px;
+}
+
+.observaciones-generales-section .ode-textarea {
+    background: #fff !important;
+    border: 2px solid rgba(139, 69, 19, 0.2) !important;
+    min-height: 100px;
+}
+
+/* ===== FIX: Cards de Evaluaciones - Mejor diseño ===== */
+.evaluacion-card {
+    background: linear-gradient(180deg, #fff 0%, #faf8f5 100%) !important;
+    border: 2px solid rgba(139, 69, 19, 0.3) !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.evaluacion-card:hover {
+    border-color: #d4af37 !important;
+    box-shadow: 0 8px 25px rgba(139, 69, 19, 0.2);
+    transform: translateY(-5px);
+}
+
+/* ===== FIX: Evaluación Header con mejor contraste ===== */
+.evaluacion-header {
+    border-bottom: 2px solid rgba(139, 69, 19, 0.15) !important;
+    padding-bottom: 15px !important;
+}
+
+.evaluacion-titulo h3 {
+    font-size: 17px !important;
+    color: #1a0f08 !important;
+    text-shadow: none;
+}
+
+/* ===== FIX: Badge de tipo evaluación ===== */
+.badge-eval-tipo {
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.15) 0%, rgba(139, 69, 19, 0.08) 100%) !important;
+    color: #6b4423 !important;
+    border: 1px solid rgba(139, 69, 19, 0.25);
+    font-size: 10px !important;
+    padding: 4px 10px !important;
+}
+
+/* ===== FIX: Botones de acción en cards ===== */
+.evaluacion-footer {
+    border-top: 2px solid rgba(139, 69, 19, 0.12) !important;
+    padding-top: 15px !important;
+    background: rgba(245, 240, 232, 0.5);
+    margin: 0 -20px -20px -20px;
+    padding: 15px 20px !important;
+    border-radius: 0 0 6px 6px;
+}
+
+.btn-eval-action {
+    padding: 10px 15px !important;
+    font-size: 11px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-eval-action:hover {
+    transform: translateY(-2px);
+}
+
+.btn-editar {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%) !important;
+    border-color: #b8860b !important;
+    color: #1a0f08 !important;
+    font-weight: 700 !important;
+}
+
+.btn-editar:hover {
+    background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%) !important;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5) !important;
+}
+
+.btn-ver {
+    background: linear-gradient(135deg, #5a3d23 0%, #3e2a1a 100%) !important;
+    border-color: #3e2a1a !important;
+}
+
+.btn-ver:hover {
+    background: linear-gradient(135deg, #8b4513 0%, #5a3d23 100%) !important;
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.4) !important;
+}
+
+/* ===== FIX: Puntuación en cards ===== */
+.eval-puntuacion {
+    background: rgba(245, 240, 232, 0.6);
+    padding: 12px !important;
+    border-radius: 6px;
+    margin-top: 12px !important;
+    border: 1px solid rgba(139, 69, 19, 0.1);
+}
+
+.puntuacion-bar {
+    height: 10px !important;
+    border-radius: 5px !important;
+    background: rgba(139, 69, 19, 0.15) !important;
+    overflow: hidden;
+}
+
+.puntuacion-fill {
+    border-radius: 5px !important;
+}
+
+.puntuacion-stats {
+    margin-top: 10px;
+}
+
+.puntuacion-stats .stat-item {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+    border-radius: 4px;
+}
+
+/* ===== FIX: Info Header del Modal Curriculum ===== */
+.eval-info-header {
+    background: linear-gradient(135deg, #5a3d23 0%, #3e2a1a 100%) !important;
+    padding: 22px 30px !important;
+}
+
+.eval-info-header .info-label {
+    color: rgba(212, 175, 55, 0.9) !important;
+    font-size: 10px !important;
+    letter-spacing: 1px;
+}
+
+.eval-info-header .info-value {
+    color: #f5f0e8 !important;
+    font-size: 15px !important;
+}
+
+.eval-objetivo {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(212, 175, 55, 0.25) !important;
+}
+
+/* ===== FIX: Buscador más visible ===== */
+.evaluaciones-search-container {
+    background: linear-gradient(135deg, #fff 0%, #faf8f5 100%) !important;
+    border: 2px solid rgba(139, 69, 19, 0.25) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.evaluaciones-search-container .ode-input {
+    background: #fff !important;
+    border: 2px solid rgba(139, 69, 19, 0.3) !important;
+}
+
+.evaluaciones-search-container .ode-input:focus {
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* ===== FIX: Botones de búsqueda ===== */
+.ode-btn.btn-search {
+    padding: 12px 24px !important;
+    font-size: 12px !important;
+    min-width: 120px;
+}
+
+.ode-btn.btn-clear {
+    padding: 12px 20px !important;
+    font-size: 12px !important;
+}
+
+/* ===== FIX: Resultados de búsqueda de jugadores ===== */
+.resultados-busqueda {
+    background: #fff !important;
+    border: 2px solid #d4af37 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+}
+
+.resultado-item {
+    padding: 14px 18px !important;
+    border-bottom: 1px solid rgba(139, 69, 19, 0.12) !important;
+}
+
+.resultado-item:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.08) 100%) !important;
+}
+
+.jugador-nombre {
+    font-size: 15px !important;
+    color: #1a0f08 !important;
+}
+
+.jugador-job {
+    background: linear-gradient(135deg, #8b4513 0%, #654321 100%) !important;
+    color: #f5f0e8 !important;
+    padding: 4px 10px !important;
+}
+
+/* ===== FIX: Empty State ===== */
+.empty-state {
+    padding: 80px 30px !important;
+}
+
+.empty-state .empty-icon {
+    font-size: 72px !important;
+    opacity: 0.6;
+    margin-bottom: 25px !important;
+}
+
+.empty-state h3 {
+    font-size: 20px !important;
+    margin-bottom: 12px !important;
+}
+
+.empty-state p {
+    font-size: 15px !important;
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ===== FIX: Tab Header ===== */
+.tab-header {
+    margin-bottom: 25px !important;
+    padding-bottom: 20px !important;
+    border-bottom: 3px solid rgba(139, 69, 19, 0.2) !important;
+}
+
+.tab-title {
+    font-size: 24px !important;
+    color: #1a0f08 !important;
+    margin-bottom: 8px !important;
+}
+
+.tab-subtitle {
+    font-size: 15px !important;
+    color: #6b4423 !important;
+}
+
+/* ===== FIX: Tabs Navigation ===== */
+.ode-tabs-nav {
+    background: linear-gradient(180deg, #5a3d23 0%, #3e2a1a 100%) !important;
+}
+
+.ode-tab-btn {
+    padding: 18px 25px !important;
+    border-bottom: 4px solid transparent !important;
+}
+
+.ode-tab-btn:hover {
+    background: rgba(212, 175, 55, 0.15) !important;
+}
+
+.ode-tab-btn.active {
+    background: rgba(212, 175, 55, 0.2) !important;
+    border-bottom-color: #d4af37 !important;
+    color: #ffd700 !important;
+}
+
+.ode-tab-btn .tab-icon {
+    font-size: 22px !important;
+}
+
+.ode-tab-btn .tab-label {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+
+/* ===== FIX: Close Button del Modal ===== */
+.ode-close-btn {
+    background: linear-gradient(135deg, #8b0000 0%, #5c0000 100%) !important;
+    border: 2px solid #cd5c5c !important;
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 22px !important;
+}
+
+.ode-close-btn:hover {
+    background: linear-gradient(135deg, #a52a2a 0%, #8b0000 100%) !important;
+    box-shadow: 0 0 20px rgba(205, 92, 92, 0.6) !important;
+}
+
+/* ===== FIX: Estado Buttons con iconos ===== */
+.estado-buttons .btn-estado {
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+}
+
+/* ===== Animación suave para todos los elementos interactivos ===== */
+.evaluacion-card,
+.curriculum-item,
+.btn-eval-action,
+.ode-btn,
+.btn-estado,
+.resultado-item,
+.ode-tab-btn {
+    transition: all 0.25s ease !important;
+}
+
+/* ===== FIX: Scroll suave en contenedores ===== */
+.ode-tabs-container,
+.curriculum-container,
+.evaluaciones-container {
+    scroll-behavior: smooth;
+}
+
