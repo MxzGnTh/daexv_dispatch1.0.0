@@ -554,18 +554,58 @@ function registerUnit() {
     });
 }
 
-function endService() {
-    if (isDevelopment) {
-        const confirmed = confirm('¿Estás seguro de que deseas salir de servicio?');
-        if (!confirmed) return;
-        showAlert('Has salido de servicio correctamente.');
-        return;
-    }
+// =====================================================
+// MODAL DE CONFIRMACIÓN
+// =====================================================
+
+function showConfirm(message, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    const messageEl = document.getElementById('confirm-message');
+    const btnYes = document.getElementById('confirm-yes-btn');
+    const btnNo = document.getElementById('confirm-no-btn');
     
-    fetch(`https://${getResourceName()}/endService`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+    if (!modal) return;
+    
+    if (messageEl) messageEl.textContent = message;
+    modal.classList.remove('hidden');
+    
+    // Limpiar listeners anteriores
+    const newBtnYes = btnYes.cloneNode(true);
+    const newBtnNo = btnNo.cloneNode(true);
+    btnYes.parentNode.replaceChild(newBtnYes, btnYes);
+    btnNo.parentNode.replaceChild(newBtnNo, btnNo);
+    
+    newBtnYes.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        if (onConfirm) onConfirm();
+    });
+    
+    newBtnNo.addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
+}
+
+function endService() {
+    showConfirm('¿Estás seguro de que deseas salir de servicio?', () => {
+        if (isDevelopment) {
+            showAlert('Has salido de servicio correctamente.');
+            return;
+        }
+        
+        console.log('[DISPATCH] Enviando solicitud de salir de servicio...');
+        
+        fetch(`https://${getResourceName()}/endService`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        })
+        .then(() => {
+            console.log('[DISPATCH] Salida de servicio exitosa');
+            showAlert('Has salido de servicio correctamente.');
+        })
+        .catch(err => {
+            console.log('[DISPATCH] Error:', err);
+        });
     });
 }
 
