@@ -115,6 +115,9 @@ function abrirSistemaODE() {
     // Cargar evaluaciones
     cargarEvaluaciones();
     
+    // Verificar si es Alto Comando
+    verificarAltoComando();
+    
     // Activar tab de documentos por defecto
     activarTab('documentos');
 }
@@ -1081,5 +1084,309 @@ function mostrarAlertaODE(mensaje, tipo = 'info') {
         setTimeout(() => alerta.remove(), 300);
     }, 4000);
 }
+
+// =====================================================
+// SISTEMA ALTO COMANDO - GESTIÓN DE TOKENS
+// =====================================================
+
+let esAltoComando = false;
+let tokensActivos = [];
+let tokenOficialSeleccionado = null;
+
+// Verificar si es Alto Comando y mostrar pestaña
+function verificarAltoComando() {
+    fetch(`https://${getResourceName()}/ode_esAltoComando`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('[ODE] Verificación Alto Comando:', data);
+        esAltoComando = data.esAltoComando || false;
+        
+        const tabAltoComando = document.getElementById('tab-alto-comando');
+        if (tabAltoComando) {
+            if (esAltoComando) {
+                tabAltoComando.classList.remove('hidden');
+                console.log('[ODE] Pestaña Alto Comando visible');
+            } else {
+                tabAltoComando.classList.add('hidden');
+            }
+        }
+    })
+    .catch(error => {
+        console.log('[ODE] Error verificando Alto Comando:', error);
+    });
+}
+
+// Cargar lista de tokens activos
+function cargarTokensActivos() {
+    const container = document.getElementById('tokens-list');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading-state"><p>Cargando tokens...</p></div>';
+    
+    fetch(`https://${getResourceName()}/ode_listarTokens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('[ODE] Tokens recibidos:', data);
+        
+        if (!data.success) {
+            container.innerHTML = `<div class="tokens-empty-state">
+                <span class="empty-icon">⚠️</span>
+                <p>${data.message || 'No se pudieron cargar los tokens'}</p>
+            </div>`;
+            return;
+        }
+        
+        tokensActivos = data.tokens || [];
+        
+        // Actualizar estadísticas
+        actualizarEstadisticasTokens(tokensActivos);
+        
+        if (tokensActivos.length === 0) {
+            container.innerHTML = `<div class="tokens-empty-state">
+                <span class="empty-icon">🎫</span>
+                <p>No hay tokens activos</p>
+                <p style="font-size: 12px; opacity: 0.7;">Otorga tokens a oficiales para que puedan acceder al Sistema ODE</p>
+            </div>`;
+            return;
+        }
+        
+        renderizarTokens(tokensActivos);
+    })
+    .catch(error => {
+        console.error('[ODE] Error cargando tokens:', error);
+        container.innerHTML = `<div class="tokens-empty-state">
+            <span class="empty-icon">❌</span>
+            <p>Error de conexión</p>
+        </div>`;
+    });
+}
+
+// Actualizar estadísticas de tokens
+function actualizarEstadisticasTokens(tokens) {
+    const statActivos = document.getElementById('stat-tokens-activos');
+    const statExpirando = document.getElementById('stat-tokens-expirando');
+    const statRevocados = document.getElementById('stat-tokens-revocados');
+    
+    if (statActivos) statActivos.textContent = tokens.length;
+    
+    // Contar tokens que expiran en 7 días o menos
+    const expirando = tokens.filter(t => t.dias_restantes <= 7).length;
+    if (statExpirando) statExpirando.textContent = expirando;
+    
+    // Revocados hoy (esto requeriría una consulta adicional)
+    if (statRevocados) statRevocados.textContent = '0';
+}
+
+// Renderizar lista de tokens
+function renderizarTokens(tokens) {
+    const container = document.getElementById('tokens-list');
+    if (!container) return;
+    
+    let html = '';
+    
+    tokens.forEach(token => {
+        let diasClase = '';
+        if (token.dias_restantes <= 3) {
+            diasClase = 'critical';
+        } else if (token.dias_restantes <= 7) {
+            diasClase = 'warning';
+        }
+        
+        html += `
+            <div class="token-card" data-token-id="${token.id}">
+                <div class="token-card-info">
+                    <div class="token-evaluador-nombre">${token.nombre_evaluador || 'Nombre no disponible'}</div>
+                    <div class="token-evaluador-id">CharID: ${token.charidentifier}</div>
+                    <div class="token-meta">
+                        <div class="token-meta-item">Otorgado por: <span>${token.otorgado_por_nombre || 'Sistema'}</span></div>
+                        <div class="token-meta-item">Expira: <span>${token.fecha_expiracion || 'N/A'}</span></div>
+                    </div>
+                </div>
+                <div class="token-dias-restantes ${diasClase}">${token.dias_restantes} días</div>
+                <div class="token-card-actions">
+                    <button class="ode-btn btn-revocar-token" onclick="revocarToken(${token.id}, '${token.nombre_evaluador}')">
+                        ❌ Revocar
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Buscar oficial para otorgar token
+function buscarOficialParaToken(termino) {
+    const container = document.getElementById('token-resultados-busqueda');
+    if (!container) return;
+    
+    if (!termino || termino.length < 2) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.innerHTML = '<div class="loading-results">Buscando...</div>';
+    container.style.display = 'block';
+    
+    fetch(`https://${getResourceName()}/ode_buscarJugador`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: termino })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.jugadores && data.jugadores.length > 0) {
+            let html = '';
+            data.jugadores.forEach(jugador => {
+                html += `
+                    <div class="resultado-item" onclick="seleccionarOficialToken(${jugador.charidentifier}, '${jugador.nombre}')">
+                        <span class="resultado-nombre">${jugador.nombre}</span>
+                        <span class="resultado-job">${jugador.job || 'Sin trabajo'}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<div class="no-results">No se encontraron oficiales</div>';
+        }
+    })
+    .catch(error => {
+        console.error('[ODE] Error buscando oficial:', error);
+        container.innerHTML = '<div class="no-results">Error de búsqueda</div>';
+    });
+}
+
+// Seleccionar oficial para token
+function seleccionarOficialToken(charId, nombre) {
+    tokenOficialSeleccionado = { charidentifier: charId, nombre: nombre };
+    
+    document.getElementById('token-oficial-id').value = charId;
+    document.getElementById('token-oficial-nombre').value = nombre;
+    document.getElementById('token-buscar-oficial').value = '';
+    document.getElementById('token-resultados-busqueda').style.display = 'none';
+    
+    console.log('[ODE] Oficial seleccionado para token:', tokenOficialSeleccionado);
+}
+
+// Otorgar token
+function otorgarToken() {
+    if (!tokenOficialSeleccionado) {
+        mostrarAlertaODE('Debes seleccionar un oficial primero', 'error');
+        return;
+    }
+    
+    const motivo = document.getElementById('token-motivo').value.trim() || 'Sin motivo especificado';
+    
+    mostrarCargandoGlobal('Otorgando token...');
+    
+    fetch(`https://${getResourceName()}/ode_otorgarToken`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            charidentifier: tokenOficialSeleccionado.charidentifier,
+            nombre: tokenOficialSeleccionado.nombre,
+            motivo: motivo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        ocultarCargandoGlobal();
+        
+        if (data.success) {
+            mostrarAlertaODE(data.message || 'Token otorgado exitosamente', 'success');
+            
+            // Limpiar formulario
+            tokenOficialSeleccionado = null;
+            document.getElementById('token-oficial-id').value = '';
+            document.getElementById('token-oficial-nombre').value = '';
+            document.getElementById('token-motivo').value = '';
+            
+            // Recargar lista
+            cargarTokensActivos();
+        } else {
+            mostrarAlertaODE(data.message || 'Error al otorgar token', 'error');
+        }
+    })
+    .catch(error => {
+        ocultarCargandoGlobal();
+        console.error('[ODE] Error otorgando token:', error);
+        mostrarAlertaODE('Error de conexión', 'error');
+    });
+}
+
+// Revocar token
+function revocarToken(tokenId, nombreEvaluador) {
+    if (!confirm(`¿Estás seguro de revocar el token de ${nombreEvaluador}?\n\nEsta acción no se puede deshacer.`)) {
+        return;
+    }
+    
+    mostrarCargandoGlobal('Revocando token...');
+    
+    fetch(`https://${getResourceName()}/ode_revocarToken`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token_id: tokenId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        ocultarCargandoGlobal();
+        
+        if (data.success) {
+            mostrarAlertaODE(data.message || 'Token revocado exitosamente', 'success');
+            cargarTokensActivos();
+        } else {
+            mostrarAlertaODE(data.message || 'Error al revocar token', 'error');
+        }
+    })
+    .catch(error => {
+        ocultarCargandoGlobal();
+        console.error('[ODE] Error revocando token:', error);
+        mostrarAlertaODE('Error de conexión', 'error');
+    });
+}
+
+// Inicializar eventos de Alto Comando
+document.addEventListener('DOMContentLoaded', () => {
+    // Botón otorgar token
+    const btnOtorgar = document.getElementById('btn-otorgar-token');
+    if (btnOtorgar) {
+        btnOtorgar.addEventListener('click', otorgarToken);
+    }
+    
+    // Botón refresh tokens
+    const btnRefresh = document.getElementById('btn-refresh-tokens');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', cargarTokensActivos);
+    }
+    
+    // Input búsqueda oficial para token
+    const inputBuscar = document.getElementById('token-buscar-oficial');
+    if (inputBuscar) {
+        let timeoutBusqueda = null;
+        inputBuscar.addEventListener('input', (e) => {
+            clearTimeout(timeoutBusqueda);
+            timeoutBusqueda = setTimeout(() => {
+                buscarOficialParaToken(e.target.value);
+            }, 300);
+        });
+    }
+    
+    // Tab Alto Comando - cargar tokens al activar
+    const tabAltoComando = document.getElementById('tab-alto-comando');
+    if (tabAltoComando) {
+        tabAltoComando.addEventListener('click', () => {
+            setTimeout(() => cargarTokensActivos(), 100);
+        });
+    }
+});
 
 console.log('[ODE SYSTEM] JavaScript cargado correctamente');

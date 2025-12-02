@@ -10,7 +10,7 @@ Config.AllowedJobs = {
     'sheriff',
     'pinkerton',
     'marshal',
-    'police',  -- Policía sin rangos específicos
+    'Police',  -- Policía sin rangos específicos Solo testing
     
     -- FUTUROS SISTEMAS (Descomenta cuando implementes)
     -- 'doctor',
@@ -29,6 +29,7 @@ Config.AdminRanks = {
     'sheriff', -- 5
     'marshal', -- 8
     'pinkerton', -- 5
+    'Police', -- Policía sin rangos específicos Solo testing
     -- FUTUROS JEFES DE SISTEMAS (descomenta cuando sea necesario)
     -- 'doctor', -- Jefe de médicos
     -- 'fire_chief', -- Jefe de bomberos
@@ -43,6 +44,7 @@ Config.PermisosEvaluador = {
     'sheriff',
     'pinkerton',
     'marshal',
+    'Police',  -- Policía sin rangos específicos Solo testing
 }
 
 Config.Grades = {
@@ -124,9 +126,36 @@ Config.OpenKey = 0x1F6D95E5 -- F4
 -- Mensajes del sistema
 Config.Lang = {
     ['no_permission'] = 'No tienes permiso para acceder al Dispatch',
+    ['no_permission_ode'] = 'No tienes permiso para acceder al Sistema ODE',
     ['dispatch_opened'] = 'Panel de Dispatch abierto',
     ['dispatch_closed'] = 'Panel de Dispatch cerrado',
     ['status_updated'] = 'Estado actualizado correctamente',
     ['district_updated'] = 'Distrito asignado correctamente',
     ['unit_updated'] = 'Unidad actualizada correctamente'
+}
+
+-- =====================================================
+-- SISTEMA DE TOKENS PARA EVALUADORES ODE
+-- =====================================================
+
+Config.SistemaTokens = {
+    -- Habilitar/deshabilitar sistema de tokens
+    habilitado = true,
+    
+    -- Duración del token en días
+    duracion_dias = 30,
+    
+    -- Trabajos que pueden otorgar/revocar tokens (Alto Comando)
+    admins_pueden_otorgar = {
+        'sheriff',
+        'marshal', 
+        'pinkerton',
+    },
+    
+    -- Grado mínimo requerido para otorgar tokens
+    grades_minimos = {
+        ['sheriff'] = 5,    -- Ayudante o superior
+        ['marshal'] = 8,    -- Adjunto o superior
+        ['pinkerton'] = 5,  -- Ayudante o superior
+    },
 }

@@ -9,14 +9,10 @@ TriggerEvent("getCore", function(core)
 end)
 
 -- =====================================================
--- CONFIGURACIÓN
+-- CONFIGURACIÓN LOCAL
 -- =====================================================
 
-local Config = {
-    PermisosEvaluador = {
-        "marshal",  -- Marshal puede evaluar
-        "fto"       -- Field Training Officer
-    },
+local ODEConfig = {
     PuntosRequeridos = 12,  -- Mínimo 12/15 para aprobar
     DebugMode = true
 }
@@ -26,13 +22,76 @@ local Config = {
 -- =====================================================
 
 local function Log(message)
-    if Config.DebugMode then
+    if ODEConfig.DebugMode then
         print("[ODE] " .. message)
     end
 end
 
-local function TienePermisoEvaluador(source)
-    -- Verificar permisos por trabajo
+local function TienePermisoODE(source)
+    -- Verificar permisos por trabajo usando Config global
+    local User = VORPcore.getUser(source)
+    if not User then 
+        Log("Usuario no encontrado para source: " .. tostring(source))
+        return false, "Usuario no encontrado"
+    end
+    
+    local Character = User.getUsedCharacter
+    if not Character then 
+        Log("Personaje no encontrado")
+        return false, "Personaje no encontrado"
+    end
+    
+    local job = Character.job
+    local jobGrade = Character.jobGrade
+    local charIdentifier = Character.charIdentifier
+    
+    Log("Verificando permisos ODE para job: " .. tostring(job) .. " grade: " .. tostring(jobGrade))
+    
+    -- 1. Verificar si está en Config.PermisosEvaluador
+    if Config and Config.PermisosEvaluador then
+        for _, allowedJob in ipairs(Config.PermisosEvaluador) do
+            if job == allowedJob then
+                Log("Permiso ODE concedido por trabajo: " .. job)
+                return true, "Permiso concedido", true -- true = es admin
+            end
+        end
+    end
+    
+    -- 2. Verificar si tiene token activo (Sistema de Tokens)
+    if Config and Config.SistemaTokens and Config.SistemaTokens.habilitado then
+        local tieneToken = TieneTokenActivo(charIdentifier)
+        if tieneToken then
+            Log("Permiso ODE concedido por TOKEN para charID: " .. charIdentifier)
+            return true, "Permiso concedido por token", false -- false = no es admin
+        end
+    end
+    
+    Log("Permiso ODE denegado para: " .. tostring(job))
+    return false, "Tu trabajo (" .. tostring(job) .. ") no tiene acceso al Sistema ODE"
+end
+
+-- Verificar si un charIdentifier tiene token activo
+function TieneTokenActivo(charIdentifier)
+    local resultado = false
+    local query = [[
+        SELECT id FROM ode_tokens_evaluador 
+        WHERE charidentifier = ? 
+          AND activo = 1 
+          AND fecha_expiracion > NOW()
+        LIMIT 1
+    ]]
+    
+    -- Usamos execute sync para obtener resultado inmediato
+    local result = exports.ghmattimysql:executeSync(query, {charIdentifier})
+    if result and #result > 0 then
+        resultado = true
+    end
+    
+    return resultado
+end
+
+-- Verificar si puede otorgar tokens (Alto Comando)
+local function EsAltoComando(source)
     local User = VORPcore.getUser(source)
     if not User then return false end
     
@@ -40,15 +99,196 @@ local function TienePermisoEvaluador(source)
     if not Character then return false end
     
     local job = Character.job
+    local grade = Character.jobGrade
     
-    for _, allowedJob in ipairs(Config.PermisosEvaluador) do
-        if job == allowedJob then
-            return true
+    if Config and Config.SistemaTokens then
+        for _, adminJob in ipairs(Config.SistemaTokens.admins_pueden_otorgar) do
+            if job == adminJob then
+                local gradeMinimo = Config.SistemaTokens.grades_minimos[job] or 1
+                if grade >= gradeMinimo then
+                    return true
+                end
+            end
         end
     end
     
     return false
 end
+
+-- Mantener compatibilidad con nombre anterior
+local function TienePermisoEvaluador(source)
+    local permiso, _ = TienePermisoODE(source)
+    return permiso
+end
+
+-- =====================================================
+-- CALLBACK - VERIFICAR PERMISOS ODE
+-- =====================================================
+
+VORPcore.Callback.Register("ode:verificarPermisos", function(source, cb)
+    local tienePermiso, mensaje, esAdmin = TienePermisoODE(source)
+    cb({
+        success = true,
+        tienePermiso = tienePermiso,
+        esAltoComando = esAdmin or EsAltoComando(source),
+        message = mensaje
+    })
+end)
+
+-- =====================================================
+-- CALLBACKS - SISTEMA DE TOKENS (ALTO COMANDO)
+-- =====================================================
+
+-- Verificar si es Alto Comando
+VORPcore.Callback.Register("ode:esAltoComando", function(source, cb)
+    cb({
+        success = true,
+        esAltoComando = EsAltoComando(source)
+    })
+end)
+
+-- Otorgar token a un oficial
+VORPcore.Callback.Register("ode:otorgarToken", function(source, cb, data)
+    if not EsAltoComando(source) then
+        cb({success = false, message = "No tienes permisos de Alto Comando"})
+        return
+    end
+    
+    local User = VORPcore.getUser(source)
+    local Character = User.getUsedCharacter
+    local adminId = Character.charIdentifier
+    local adminNombre = Character.firstname .. " " .. Character.lastname
+    
+    local targetId = data.charidentifier
+    local targetNombre = data.nombre
+    local motivo = data.motivo or "Sin motivo especificado"
+    local duracion = Config.SistemaTokens.duracion_dias or 30
+    
+    -- Verificar si ya tiene token activo
+    if TieneTokenActivo(targetId) then
+        cb({success = false, message = "Este oficial ya tiene un token activo"})
+        return
+    end
+    
+    local query = [[
+        INSERT INTO ode_tokens_evaluador 
+        (charidentifier, nombre_evaluador, otorgado_por_id, otorgado_por_nombre, 
+         fecha_expiracion, motivo, activo)
+        VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY), ?, 1)
+    ]]
+    
+    exports.ghmattimysql:execute(query, {
+        targetId,
+        targetNombre,
+        adminId,
+        adminNombre,
+        duracion,
+        motivo
+    }, function(result)
+        if result and result.insertId then
+            Log("Token otorgado: " .. targetNombre .. " por " .. adminNombre)
+            cb({
+                success = true, 
+                message = "Token otorgado exitosamente a " .. targetNombre .. " por " .. duracion .. " días"
+            })
+        else
+            cb({success = false, message = "Error al otorgar el token"})
+        end
+    end)
+end)
+
+-- Revocar token
+VORPcore.Callback.Register("ode:revocarToken", function(source, cb, data)
+    if not EsAltoComando(source) then
+        cb({success = false, message = "No tienes permisos de Alto Comando"})
+        return
+    end
+    
+    local User = VORPcore.getUser(source)
+    local Character = User.getUsedCharacter
+    local adminId = Character.charIdentifier
+    local adminNombre = Character.firstname .. " " .. Character.lastname
+    
+    local tokenId = data.token_id
+    
+    local query = [[
+        UPDATE ode_tokens_evaluador 
+        SET activo = 0, 
+            fecha_revocacion = NOW(),
+            revocado_por_id = ?,
+            revocado_por_nombre = ?
+        WHERE id = ?
+    ]]
+    
+    exports.ghmattimysql:execute(query, {adminId, adminNombre, tokenId}, function(result)
+        if result and result.affectedRows > 0 then
+            Log("Token revocado ID: " .. tokenId .. " por " .. adminNombre)
+            cb({success = true, message = "Token revocado exitosamente"})
+        else
+            cb({success = false, message = "Error al revocar el token"})
+        end
+    end)
+end)
+
+-- Listar tokens activos
+VORPcore.Callback.Register("ode:listarTokens", function(source, cb)
+    if not EsAltoComando(source) then
+        cb({success = false, message = "No tienes permisos de Alto Comando", tokens = {}})
+        return
+    end
+    
+    local query = [[
+        SELECT 
+            id,
+            charidentifier,
+            nombre_evaluador,
+            otorgado_por_nombre,
+            DATE_FORMAT(fecha_inicio, '%d/%m/%Y %H:%i') as fecha_inicio,
+            DATE_FORMAT(fecha_expiracion, '%d/%m/%Y %H:%i') as fecha_expiracion,
+            DATEDIFF(fecha_expiracion, NOW()) as dias_restantes,
+            motivo
+        FROM ode_tokens_evaluador
+        WHERE activo = 1 AND fecha_expiracion > NOW()
+        ORDER BY fecha_expiracion ASC
+    ]]
+    
+    exports.ghmattimysql:execute(query, {}, function(result)
+        cb({success = true, tokens = result or {}})
+    end)
+end)
+
+-- Obtener mi token (para cualquier usuario)
+VORPcore.Callback.Register("ode:miToken", function(source, cb)
+    local User = VORPcore.getUser(source)
+    if not User then 
+        cb({success = false, token = nil})
+        return
+    end
+    
+    local Character = User.getUsedCharacter
+    local charId = Character.charIdentifier
+    
+    local query = [[
+        SELECT 
+            id,
+            otorgado_por_nombre,
+            DATE_FORMAT(fecha_inicio, '%d/%m/%Y') as fecha_inicio,
+            DATE_FORMAT(fecha_expiracion, '%d/%m/%Y') as fecha_expiracion,
+            DATEDIFF(fecha_expiracion, NOW()) as dias_restantes,
+            motivo
+        FROM ode_tokens_evaluador
+        WHERE charidentifier = ? AND activo = 1 AND fecha_expiracion > NOW()
+        LIMIT 1
+    ]]
+    
+    exports.ghmattimysql:execute(query, {charId}, function(result)
+        if result and #result > 0 then
+            cb({success = true, token = result[1]})
+        else
+            cb({success = true, token = nil})
+        end
+    end)
+end)
 
 -- =====================================================
 -- CALLBACKS - GESTIÓN DE EVALUACIONES
@@ -458,6 +698,164 @@ RegisterCommand("ode_stats", function(source, args, rawCommand)
                 stats.total, stats.aprobadas, stats.pendientes, stats.rechazadas
             )
             TriggerClientEvent("vorp:TipRight", source, mensaje, 5000)
+        end
+    end)
+end, false)
+
+-- =====================================================
+-- COMANDOS DE TOKENS (ALTO COMANDO)
+-- =====================================================
+
+-- Comando para otorgar token: /ode_token [charidentifier] [motivo]
+RegisterCommand("ode_token", function(source, args, rawCommand)
+    if not EsAltoComando(source) then
+        TriggerClientEvent("vorp:TipRight", source, "No tienes permisos de Alto Comando", 4000)
+        return
+    end
+    
+    local targetCharId = tonumber(args[1])
+    if not targetCharId then
+        TriggerClientEvent("vorp:TipRight", source, "Uso: /ode_token [charidentifier] [motivo]", 4000)
+        return
+    end
+    
+    local motivo = table.concat(args, " ", 2) or "Otorgado por comando"
+    
+    -- Buscar nombre del personaje
+    local queryNombre = "SELECT CONCAT(firstname, ' ', lastname) as nombre FROM characters WHERE charidentifier = ?"
+    
+    exports.ghmattimysql:execute(queryNombre, {targetCharId}, function(result)
+        if not result or #result == 0 then
+            TriggerClientEvent("vorp:TipRight", source, "Personaje no encontrado con ID: " .. targetCharId, 4000)
+            return
+        end
+        
+        local nombre = result[1].nombre
+        
+        -- Verificar si ya tiene token
+        if TieneTokenActivo(targetCharId) then
+            TriggerClientEvent("vorp:TipRight", source, nombre .. " ya tiene un token activo", 4000)
+            return
+        end
+        
+        local User = VORPcore.getUser(source)
+        local Character = User.getUsedCharacter
+        local adminId = Character.charIdentifier
+        local adminNombre = Character.firstname .. " " .. Character.lastname
+        local duracion = Config.SistemaTokens.duracion_dias or 30
+        
+        local query = [[
+            INSERT INTO ode_tokens_evaluador 
+            (charidentifier, nombre_evaluador, otorgado_por_id, otorgado_por_nombre, 
+             fecha_expiracion, motivo, activo)
+            VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY), ?, 1)
+        ]]
+        
+        exports.ghmattimysql:execute(query, {
+            targetCharId, nombre, adminId, adminNombre, duracion, motivo
+        }, function(insertResult)
+            if insertResult and insertResult.insertId then
+                Log("Token otorgado via comando: " .. nombre .. " por " .. adminNombre)
+                TriggerClientEvent("vorp:TipRight", source, 
+                    "Token otorgado a " .. nombre .. " por " .. duracion .. " días", 5000)
+            else
+                TriggerClientEvent("vorp:TipRight", source, "Error al otorgar token", 4000)
+            end
+        end)
+    end)
+end, false)
+
+-- Comando para revocar token: /ode_revocar [charidentifier]
+RegisterCommand("ode_revocar", function(source, args, rawCommand)
+    if not EsAltoComando(source) then
+        TriggerClientEvent("vorp:TipRight", source, "No tienes permisos de Alto Comando", 4000)
+        return
+    end
+    
+    local targetCharId = tonumber(args[1])
+    if not targetCharId then
+        TriggerClientEvent("vorp:TipRight", source, "Uso: /ode_revocar [charidentifier]", 4000)
+        return
+    end
+    
+    local User = VORPcore.getUser(source)
+    local Character = User.getUsedCharacter
+    local adminId = Character.charIdentifier
+    local adminNombre = Character.firstname .. " " .. Character.lastname
+    
+    local query = [[
+        UPDATE ode_tokens_evaluador 
+        SET activo = 0, fecha_revocacion = NOW(), revocado_por_id = ?, revocado_por_nombre = ?
+        WHERE charidentifier = ? AND activo = 1
+    ]]
+    
+    exports.ghmattimysql:execute(query, {adminId, adminNombre, targetCharId}, function(result)
+        if result and result.affectedRows > 0 then
+            Log("Token revocado via comando para charID: " .. targetCharId .. " por " .. adminNombre)
+            TriggerClientEvent("vorp:TipRight", source, "Token revocado exitosamente", 4000)
+        else
+            TriggerClientEvent("vorp:TipRight", source, "No se encontró token activo para este ID", 4000)
+        end
+    end)
+end, false)
+
+-- Comando para ver mis tokens: /ode_mis_tokens
+RegisterCommand("ode_mis_tokens", function(source, args, rawCommand)
+    local User = VORPcore.getUser(source)
+    if not User then return end
+    
+    local Character = User.getUsedCharacter
+    local charId = Character.charIdentifier
+    
+    local query = [[
+        SELECT 
+            otorgado_por_nombre,
+            DATE_FORMAT(fecha_expiracion, '%d/%m/%Y') as expira,
+            DATEDIFF(fecha_expiracion, NOW()) as dias
+        FROM ode_tokens_evaluador
+        WHERE charidentifier = ? AND activo = 1 AND fecha_expiracion > NOW()
+    ]]
+    
+    exports.ghmattimysql:execute(query, {charId}, function(result)
+        if result and #result > 0 then
+            local token = result[1]
+            TriggerClientEvent("vorp:TipRight", source, 
+                "Token ODE activo\nOtorgado por: " .. token.otorgado_por_nombre .. 
+                "\nExpira: " .. token.expira .. " (" .. token.dias .. " días)", 6000)
+        else
+            TriggerClientEvent("vorp:TipRight", source, "No tienes ningún token ODE activo", 4000)
+        end
+    end)
+end, false)
+
+-- Comando para listar todos los tokens: /ode_listar_tokens
+RegisterCommand("ode_listar_tokens", function(source, args, rawCommand)
+    if not EsAltoComando(source) then
+        TriggerClientEvent("vorp:TipRight", source, "No tienes permisos de Alto Comando", 4000)
+        return
+    end
+    
+    local query = [[
+        SELECT 
+            charidentifier,
+            nombre_evaluador,
+            DATEDIFF(fecha_expiracion, NOW()) as dias
+        FROM ode_tokens_evaluador
+        WHERE activo = 1 AND fecha_expiracion > NOW()
+        ORDER BY fecha_expiracion
+    ]]
+    
+    exports.ghmattimysql:execute(query, {}, function(result)
+        if result and #result > 0 then
+            print("^2[ODE] Tokens activos: " .. #result .. "^0")
+            for i, token in ipairs(result) do
+                print(string.format("  %d. %s (ID: %d) - %d días restantes", 
+                    i, token.nombre_evaluador, token.charidentifier, token.dias))
+            end
+            TriggerClientEvent("vorp:TipRight", source, 
+                "Tokens activos: " .. #result .. " (ver consola F8 para detalles)", 4000)
+        else
+            TriggerClientEvent("vorp:TipRight", source, "No hay tokens activos", 4000)
         end
     end)
 end, false)

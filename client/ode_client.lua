@@ -5,6 +5,7 @@
 
 local VORPcore = {}
 local odeAbierto = false
+local tienePermisoODE = false
 
 -- Esperar a que VORPcore esté listo
 TriggerEvent("getCore", function(core)
@@ -17,14 +18,42 @@ end)
 -- =====================================================
 
 RegisterCommand("ode", function()
-    AbrirSistemaODE()
+    VerificarYAbrirODE()
 end, false)
 
 -- También se puede abrir desde el botón del dispatch
 RegisterNUICallback("abrirODE", function(data, cb)
-    AbrirSistemaODE()
-    cb({success = true})
+    VerificarYAbrirODE(function(exito)
+        cb({success = exito})
+    end)
 end)
+
+-- =====================================================
+-- VERIFICAR PERMISOS ANTES DE ABRIR ODE
+-- =====================================================
+
+function VerificarYAbrirODE(callback)
+    if odeAbierto then 
+        if callback then callback(false) end
+        return 
+    end
+    
+    -- Verificar permisos en el servidor
+    TriggerServerCallback("ode:verificarPermisos", function(result)
+        if result.success and result.tienePermiso then
+            tienePermisoODE = true
+            AbrirSistemaODE()
+            if callback then callback(true) end
+        else
+            tienePermisoODE = false
+            -- Mostrar notificación de error
+            local mensaje = result.message or "No tienes permisos para acceder al Sistema ODE"
+            TriggerEvent("vorp:TipRight", mensaje, 4000)
+            print("^1[ODE CLIENT] " .. mensaje .. "^0")
+            if callback then callback(false) end
+        end
+    end)
+end
 
 -- =====================================================
 -- FUNCIÓN PRINCIPAL PARA ABRIR ODE
@@ -119,6 +148,50 @@ RegisterNUICallback("ode_buscarJugadores", function(data, cb)
         end
         cb(result)
     end, data)
+end)
+
+-- =====================================================
+-- CALLBACKS NUI - SISTEMA DE TOKENS (ALTO COMANDO)
+-- =====================================================
+
+-- Verificar si es Alto Comando
+RegisterNUICallback("ode_esAltoComando", function(data, cb)
+    print("[ODE CLIENT] Verificando si es Alto Comando")
+    TriggerServerCallback("ode:esAltoComando", function(result)
+        cb(result)
+    end)
+end)
+
+-- Listar tokens activos
+RegisterNUICallback("ode_listarTokens", function(data, cb)
+    print("[ODE CLIENT] Listando tokens activos")
+    TriggerServerCallback("ode:listarTokens", function(result)
+        cb(result)
+    end)
+end)
+
+-- Otorgar token
+RegisterNUICallback("ode_otorgarToken", function(data, cb)
+    print("[ODE CLIENT] Otorgando token a charID: " .. tostring(data.charidentifier))
+    TriggerServerCallback("ode:otorgarToken", function(result)
+        cb(result)
+    end, data)
+end)
+
+-- Revocar token
+RegisterNUICallback("ode_revocarToken", function(data, cb)
+    print("[ODE CLIENT] Revocando token ID: " .. tostring(data.token_id))
+    TriggerServerCallback("ode:revocarToken", function(result)
+        cb(result)
+    end, data)
+end)
+
+-- Buscar jugador para token (reutiliza buscarJugadores)
+RegisterNUICallback("ode_buscarJugador", function(data, cb)
+    print("[ODE CLIENT] Buscando jugador para token: " .. (data.nombre or "vacio"))
+    TriggerServerCallback("ode:buscarJugadores", function(result)
+        cb(result)
+    end, {search = data.nombre})
 end)
 
 -- =====================================================

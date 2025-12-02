@@ -335,6 +335,10 @@
                     <span class="tab-icon">➕</span>
                     <span class="tab-label">Crear Evaluación</span>
                 </button>
+                <button class="ode-tab-btn alto-comando-tab hidden" data-tab="altocomando" id="tab-alto-comando">
+                    <span class="tab-icon">⭐</span>
+                    <span class="tab-label">Alto Comando</span>
+                </button>
             </nav>
 
             <!-- Contenido de las pestañas -->
@@ -407,73 +411,174 @@
                         <p class="tab-subtitle">Registrar una nueva evaluación para un oficial</p>
                     </div>
 
-                    <div class="crear-evaluacion-form">
-                        <!-- Sección: Buscar Oficial -->
-                        <div class="form-section">
-                            <h3 class="section-title-ode">1. Seleccionar Oficial a Evaluar</h3>
-                            
+                    <!-- Área scrolleable del formulario -->
+                    <div class="crear-form-scroll-area">
+                        <div class="crear-evaluacion-form">
+                            <!-- Sección: Buscar Oficial -->
+                            <div class="form-section">
+                                <h3 class="section-title-ode">1. Seleccionar Oficial a Evaluar</h3>
+                                
+                                <div class="form-group">
+                                    <label for="buscar-jugador-input">Buscar oficial:</label>
+                                    <input 
+                                        type="text" 
+                                        id="buscar-jugador-input" 
+                                        class="ode-input" 
+                                        placeholder="Escribe el nombre del oficial..."
+                                        autocomplete="off"
+                                    />
+                                    <div id="resultados-busqueda" class="resultados-busqueda"></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Oficial seleccionado:</label>
+                                    <input 
+                                        type="hidden" 
+                                        id="crear-evaluado-id"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        id="crear-evaluado-nombre" 
+                                        class="ode-input" 
+                                        placeholder="Ningún oficial seleccionado"
+                                        readonly
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Sección: Datos de la Evaluación -->
+                            <div class="form-section">
+                                <h3 class="section-title-ode">2. Datos de la Evaluación</h3>
+                                
+                                <div class="form-group">
+                                    <label for="crear-tipo">Tipo de evaluación:</label>
+                                    <select id="crear-tipo" class="ode-select">
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="Evaluación Inicial">Evaluación Inicial</option>
+                                        <option value="Evaluación de Promoción">Evaluación de Promoción</option>
+                                        <option value="Recertificación">Recertificación</option>
+                                        <option value="Evaluación Disciplinaria">Evaluación Disciplinaria</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="crear-objetivo">Objetivo de la evaluación:</label>
+                                    <textarea 
+                                        id="crear-objetivo" 
+                                        class="ode-textarea" 
+                                        rows="4"
+                                        placeholder="Describe el objetivo de esta evaluación (conocimientos, habilidades, competencias a evaluar)..."
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer con Botones de Acción - SIEMPRE VISIBLE -->
+                    <div class="crear-form-footer-actions">
+                        <button id="btn-crear-evaluacion" class="crear-form-btn crear-form-btn-primary">
+                            ✓ Crear Evaluación
+                        </button>
+                        <button id="btn-limpiar-crear-form" class="crear-form-btn crear-form-btn-secondary">
+                            ✖ Limpiar Formulario
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 3: ALTO COMANDO (GESTIÓN DE TOKENS) -->
+                <div id="ode-tab-altocomando" class="ode-tab-content">
+                    <div class="tab-header">
+                        <h2 class="tab-title">⭐ Panel de Alto Comando</h2>
+                        <p class="tab-subtitle">Gestión de Permisos de Evaluador - Solo para mandos superiores</p>
+                    </div>
+
+                    <!-- Estadísticas de Tokens -->
+                    <div class="tokens-stats-bar">
+                        <div class="token-stat-item">
+                            <span class="token-stat-icon">🎫</span>
+                            <div>
+                                <span class="token-stat-label">Tokens Activos</span>
+                                <span class="token-stat-value" id="stat-tokens-activos">0</span>
+                            </div>
+                        </div>
+                        <div class="token-stat-item">
+                            <span class="token-stat-icon">📅</span>
+                            <div>
+                                <span class="token-stat-label">Expiran Pronto</span>
+                                <span class="token-stat-value warning" id="stat-tokens-expirando">0</span>
+                            </div>
+                        </div>
+                        <div class="token-stat-item">
+                            <span class="token-stat-icon">❌</span>
+                            <div>
+                                <span class="token-stat-label">Revocados Hoy</span>
+                                <span class="token-stat-value" id="stat-tokens-revocados">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Otorgar Token -->
+                    <div class="alto-comando-section">
+                        <h3 class="section-title-ode">🎫Registro de permisos (30 días)</h3>
+                        
+                        <div class="token-form">
                             <div class="form-group">
-                                <label for="buscar-jugador-input">Buscar oficial:</label>
+                                <label for="token-buscar-oficial">Buscar oficial:</label>
                                 <input 
                                     type="text" 
-                                    id="buscar-jugador-input" 
+                                    id="token-buscar-oficial" 
                                     class="ode-input" 
                                     placeholder="Escribe el nombre del oficial..."
                                     autocomplete="off"
                                 />
-                                <div id="resultados-busqueda" class="resultados-busqueda"></div>
+                                <div id="token-resultados-busqueda" class="resultados-busqueda"></div>
                             </div>
 
-                            <div class="form-group">
-                                <label>Oficial seleccionado:</label>
-                                <input 
-                                    type="hidden" 
-                                    id="crear-evaluado-id"
-                                />
-                                <input 
-                                    type="text" 
-                                    id="crear-evaluado-nombre" 
-                                    class="ode-input" 
-                                    placeholder="Ningún oficial seleccionado"
-                                    readonly
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Sección: Datos de la Evaluación -->
-                        <div class="form-section">
-                            <h3 class="section-title-ode">2. Datos de la Evaluación</h3>
-                            
-                            <div class="form-group">
-                                <label for="crear-tipo">Tipo de evaluación:</label>
-                                <select id="crear-tipo" class="ode-select">
-                                    <option value="">Seleccionar tipo</option>
-                                    <option value="Evaluación Inicial">Evaluación Inicial</option>
-                                    <option value="Evaluación de Promoción">Evaluación de Promoción</option>
-                                    <option value="Recertificación">Recertificación</option>
-                                    <option value="Evaluación Disciplinaria">Evaluación Disciplinaria</option>
-                                </select>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Oficial seleccionado:</label>
+                                    <input 
+                                        type="hidden" 
+                                        id="token-oficial-id"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        id="token-oficial-nombre" 
+                                        class="ode-input" 
+                                        placeholder="Ningún oficial seleccionado"
+                                        readonly
+                                    />
+                                </div>
+                                <div class="form-group half">
+                                    <label for="token-motivo">Motivo:</label>
+                                    <input 
+                                        type="text" 
+                                        id="token-motivo" 
+                                        class="ode-input" 
+                                        placeholder="Motivo del otorgamiento..."
+                                    />
+                                </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="crear-objetivo">Objetivo de la evaluación:</label>
-                                <textarea 
-                                    id="crear-objetivo" 
-                                    class="ode-textarea" 
-                                    rows="4"
-                                    placeholder="Describe el objetivo de esta evaluación (conocimientos, habilidades, competencias a evaluar)..."
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Botones de Acción -->
-                        <div class="form-actions">
-                            <button id="btn-crear-evaluacion" class="ode-btn btn-primary">
-                                ✓ Crear Evaluación
+                            <button id="btn-otorgar-token" class="ode-btn btn-primary token-btn">
+                                🎫 Registro de permisos (30 días)
                             </button>
-                            <button id="btn-limpiar-crear-form" class="ode-btn btn-clear">
-                                ✖ Limpiar Formulario
+                        </div>
+                    </div>
+
+                    <!-- Sección: Lista de Tokens Activos -->
+                    <div class="alto-comando-section">
+                        <div class="section-header-flex">
+                            <h3 class="section-title-ode">📋 Tokens Activos</h3>
+                            <button id="btn-refresh-tokens" class="ode-btn btn-refresh-small">
+                                🔄 Actualizar
                             </button>
+                        </div>
+                        
+                        <div id="tokens-list" class="tokens-list-container">
+                            <div class="loading-state">
+                                <p>Cargando tokens activos...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -488,9 +593,9 @@
     ========================================= -->
     <div id="modal-curriculum" class="ode-modal hidden">
         <div class="ode-modal-overlay"></div>
-        <div class="ode-modal-container modal-large">
+        <div class="ode-modal-container modal-curriculum-container">
             <!-- Header -->
-            <div class="ode-modal-header">
+            <div class="ode-modal-header curriculum-header-fixed">
                 <div class="ode-header-content">
                     <h1 class="ode-modal-title">Curriculum de Evaluación</h1>
                     <p class="ode-modal-subtitle">15 Puntos de Competencias - 1899</p>
@@ -524,35 +629,38 @@
                 </div>
             </div>
 
-            <!-- Lista de 15 Puntos del Curriculum -->
-            <div class="curriculum-container">
-                <h3 class="curriculum-section-title">Puntos de Evaluación (15 Competencias)</h3>
-                
-                <div id="curriculum-puntos-list" class="curriculum-list">
-                    <!-- Los 15 puntos se cargan dinámicamente desde JavaScript -->
-                    <div class="loading-state">
-                        <p>Cargando puntos de evaluación...</p>
+            <!-- Contenido scrolleable -->
+            <div class="curriculum-scroll-area">
+                <!-- Lista de 15 Puntos del Curriculum -->
+                <div class="curriculum-container">
+                    <h3 class="curriculum-section-title">Puntos de Evaluación (15 Competencias)</h3>
+                    
+                    <div id="curriculum-puntos-list" class="curriculum-list">
+                        <!-- Los 15 puntos se cargan dinámicamente desde JavaScript -->
+                        <div class="loading-state">
+                            <p>Cargando puntos de evaluación...</p>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Observaciones Generales -->
-                <div class="observaciones-generales-section">
-                    <label for="observaciones-generales">Observaciones Generales:</label>
-                    <textarea 
-                        id="observaciones-generales" 
-                        class="ode-textarea" 
-                        rows="4"
-                        placeholder="Observaciones adicionales sobre la evaluación completa..."
-                    ></textarea>
+                    <!-- Observaciones Generales -->
+                    <div class="observaciones-generales-section">
+                        <label for="observaciones-generales">Observaciones Generales:</label>
+                        <textarea 
+                            id="observaciones-generales" 
+                            class="ode-textarea" 
+                            rows="4"
+                            placeholder="Observaciones adicionales sobre la evaluación completa..."
+                        ></textarea>
+                    </div>
                 </div>
             </div>
 
-            <!-- Acciones -->
-            <div class="modal-actions">
-                <button id="btn-guardar-curriculum" class="ode-btn btn-secondary">
+            <!-- Footer con Acciones - SIEMPRE VISIBLE -->
+            <div class="curriculum-footer-actions">
+                <button id="btn-guardar-curriculum" class="curriculum-btn curriculum-btn-secondary">
                     💾 Guardar Borrador
                 </button>
-                <button id="btn-enviar-evaluacion" class="ode-btn btn-primary">
+                <button id="btn-enviar-evaluacion" class="curriculum-btn curriculum-btn-primary">
                     📤 Enviar Evaluación
                 </button>
             </div>
