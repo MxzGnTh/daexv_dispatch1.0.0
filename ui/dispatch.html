@@ -7,12 +7,14 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Contenedor principal del dispatch -->
-    <div id="dispatch-container" class="hidden">
-        <!-- Indicador de permisos de administrador -->
-        <div id="admin-indicator" class="hidden">
-            <p>⭐ AUTORIDAD SUPERIOR - Puede modificar todas las unidades</p>
-        </div>
+    <!-- Wrapper principal que contiene todo y controla el overflow -->
+    <div id="dispatch-wrapper" class="hidden">
+        <!-- Contenedor principal del dispatch -->
+        <div id="dispatch-container">
+            <!-- Indicador de permisos de administrador -->
+            <div id="admin-indicator" class="hidden">
+                <p>⭐ AUTORIDAD SUPERIOR - Puede modificar todas las unidades</p>
+            </div>
 
         <!-- Header estilo pergamino -->
         <div class="dispatch-header">
@@ -104,6 +106,7 @@
         <!-- Botón de cerrar -->
         <button id="btn-close" class="western-btn close-btn">✖ Cerrar Dispatch</button>
     </div>
+    </div> <!-- Cierre dispatch-wrapper -->
 
     <!-- ========================================
          MODAL DE SISTEMA DE AVISOS/ALERTAS

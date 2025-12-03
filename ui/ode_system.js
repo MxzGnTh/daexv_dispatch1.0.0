@@ -133,9 +133,9 @@ function cerrarSistemaODE() {
     evaluacionActual = null;
     modoEdicion = false;
     
-    // Verificar si el dispatch está abierto
-    const dispatchContainer = document.getElementById('dispatch-container');
-    const dispatchAbierto = dispatchContainer && !dispatchContainer.classList.contains('hidden');
+    // Verificar si el dispatch está abierto (ahora usa el wrapper)
+    const dispatchWrapper = document.getElementById('dispatch-wrapper');
+    const dispatchAbierto = dispatchWrapper && !dispatchWrapper.classList.contains('hidden');
     
     // Solo notificar cierre de ODE si el dispatch NO está abierto
     // Si el dispatch está abierto, NO quitamos el focus del NUI

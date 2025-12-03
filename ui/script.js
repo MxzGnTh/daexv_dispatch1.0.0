@@ -227,16 +227,16 @@ function openDispatch(data) {
     
     populateSelects();
     
-    const dispatchContainer = document.getElementById('dispatch-container');
-    if (dispatchContainer) {
-        dispatchContainer.classList.remove('hidden');
+    const dispatchWrapper = document.getElementById('dispatch-wrapper');
+    if (dispatchWrapper) {
+        dispatchWrapper.classList.remove('hidden');
     }
 }
 
 function hideDispatch() {
-    const dispatchContainer = document.getElementById('dispatch-container');
-    if (dispatchContainer) {
-        dispatchContainer.classList.add('hidden');
+    const dispatchWrapper = document.getElementById('dispatch-wrapper');
+    if (dispatchWrapper) {
+        dispatchWrapper.classList.add('hidden');
     }
 }
 
